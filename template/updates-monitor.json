@@ -1,0 +1,398 @@
+{
+  "zabbix_export": {
+    "version": "7.4",
+    "template_groups": [
+      {
+        "uuid": "7df96b18c230490a9a0a9e2307226338",
+        "name": "Templates"
+      }
+    ],
+    "templates": [
+      {
+        "uuid": "ac17075fc25f43c082fd459ebe1cf892",
+        "template": "Updates monitor Debian Ubuntu",
+        "name": "Updates monitor Debian Ubuntu",
+        "description": "Monitorowanie aktualizacji APT przez updates-monitor i agenta Zabbix.",
+        "groups": [
+          {
+            "name": "Templates"
+          }
+        ],
+        "items": [
+          {
+            "uuid": "e41abad9072a46308b1d2dc3f88d0afc",
+            "name": "Aktualizacje: dane kontroli",
+            "key": "updates.monitor.raw",
+            "delay": "1m",
+            "history": "7d",
+            "trends": "0",
+            "value_type": "TEXT"
+          },
+          {
+            "uuid": "53e24c6dac444f7785c8fa29a25ba350",
+            "name": "Aktualizacje regularne",
+            "type": "DEPENDENT",
+            "key": "updates.monitor.regular",
+            "delay": "0",
+            "history": "30d",
+            "trends": "365d",
+            "value_type": "UNSIGNED",
+            "preprocessing": [
+              {
+                "type": "JAVASCRIPT",
+                "parameters": [
+                  "var data = JSON.parse(value); if (data.valid !== 1) return null; return data.regular;"
+                ]
+              }
+            ],
+            "master_item": {
+              "key": "updates.monitor.raw"
+            }
+          },
+          {
+            "uuid": "0ee9cbdb26fc4c8bacc229e5f5bf2c25",
+            "name": "Aktualizacje bezpieczeństwa",
+            "type": "DEPENDENT",
+            "key": "updates.monitor.security",
+            "delay": "0",
+            "history": "30d",
+            "trends": "365d",
+            "value_type": "UNSIGNED",
+            "preprocessing": [
+              {
+                "type": "JAVASCRIPT",
+                "parameters": [
+                  "var data = JSON.parse(value); if (data.valid !== 1) return null; return data.security;"
+                ]
+              }
+            ],
+            "master_item": {
+              "key": "updates.monitor.raw"
+            }
+          },
+          {
+            "uuid": "95ecf4b6899449c9a820e12410f21552",
+            "name": "Aktualizacje bezpieczeństwa kernela",
+            "type": "DEPENDENT",
+            "key": "updates.monitor.kernel_security",
+            "delay": "0",
+            "history": "30d",
+            "trends": "365d",
+            "value_type": "UNSIGNED",
+            "preprocessing": [
+              {
+                "type": "JAVASCRIPT",
+                "parameters": [
+                  "var data = JSON.parse(value); if (data.valid !== 1) return null; return data.kernel_security;"
+                ]
+              }
+            ],
+            "master_item": {
+              "key": "updates.monitor.raw"
+            }
+          },
+          {
+            "uuid": "ef362a01e2204bb1a5b724ae14313d4d",
+            "name": "Aktualizacje: poprawność kontroli",
+            "type": "DEPENDENT",
+            "key": "updates.monitor.valid",
+            "delay": "0",
+            "history": "30d",
+            "trends": "365d",
+            "value_type": "UNSIGNED",
+            "preprocessing": [
+              {
+                "type": "JSONPATH",
+                "parameters": [
+                  "$.valid"
+                ]
+              }
+            ],
+            "master_item": {
+              "key": "updates.monitor.raw"
+            }
+          },
+          {
+            "uuid": "5b46d92d45434b7ba10d9d1cfd0500d8",
+            "name": "Aktualizacje: czas ostatniej udanej kontroli",
+            "type": "DEPENDENT",
+            "key": "updates.monitor.checked_at",
+            "delay": "0",
+            "history": "30d",
+            "trends": "365d",
+            "value_type": "UNSIGNED",
+            "preprocessing": [
+              {
+                "type": "JSONPATH",
+                "parameters": [
+                  "$.checked_at"
+                ]
+              }
+            ],
+            "master_item": {
+              "key": "updates.monitor.raw"
+            }
+          },
+          {
+            "uuid": "2d8f4805490a4372a654cbe23a54f1a4",
+            "name": "Harmonogram: dane stanu",
+            "key": "updates.monitor.health",
+            "delay": "1m",
+            "history": "7d",
+            "trends": "0",
+            "value_type": "TEXT"
+          },
+          {
+            "uuid": "d3054f2c99ce4c2da5b8ed4470744710",
+            "name": "Harmonogram: poprawność danych",
+            "type": "DEPENDENT",
+            "key": "updates.monitor.health.valid",
+            "delay": "0",
+            "history": "30d",
+            "trends": "365d",
+            "value_type": "UNSIGNED",
+            "preprocessing": [
+              {
+                "type": "JSONPATH",
+                "parameters": [
+                  "$.valid"
+                ]
+              }
+            ],
+            "master_item": {
+              "key": "updates.monitor.health"
+            }
+          },
+          {
+            "uuid": "7b26aaa389c84ae4a07f151a818f21f4",
+            "name": "Harmonogram cron: włączony i działający",
+            "type": "DEPENDENT",
+            "key": "updates.monitor.health.scheduler_active",
+            "delay": "0",
+            "history": "30d",
+            "trends": "365d",
+            "value_type": "UNSIGNED",
+            "preprocessing": [
+              {
+                "type": "JSONPATH",
+                "parameters": [
+                  "$.scheduler_active"
+                ]
+              }
+            ],
+            "master_item": {
+              "key": "updates.monitor.health"
+            },
+            "valuemap": {
+              "name": "Stan harmonogramu updates-monitor"
+            }
+          },
+          {
+            "uuid": "e2a250906ba14300b220e3a5ebb7f99e",
+            "name": "Kontrola: stan usługi systemd",
+            "type": "DEPENDENT",
+            "key": "updates.monitor.health.service_state",
+            "delay": "0",
+            "history": "30d",
+            "trends": "365d",
+            "value_type": "UNSIGNED",
+            "preprocessing": [
+              {
+                "type": "JSONPATH",
+                "parameters": [
+                  "$.service_state"
+                ]
+              }
+            ],
+            "master_item": {
+              "key": "updates.monitor.health"
+            },
+            "description": "0 inactive; 1 activating; 2 active; 3 deactivating; 4 failed.",
+            "valuemap": {
+              "name": "Stan usługi updates-monitor"
+            }
+          },
+          {
+            "uuid": "ee747a7560c94004b54ed5bf40d088cc",
+            "name": "Kontrola: usługa w stanie błędu",
+            "type": "DEPENDENT",
+            "key": "updates.monitor.health.service_failed",
+            "delay": "0",
+            "history": "30d",
+            "trends": "365d",
+            "value_type": "UNSIGNED",
+            "preprocessing": [
+              {
+                "type": "JSONPATH",
+                "parameters": [
+                  "$.service_failed"
+                ]
+              }
+            ],
+            "master_item": {
+              "key": "updates.monitor.health"
+            }
+          },
+          {
+            "uuid": "391e6d4afd5d403f83e96294f19eb5ec",
+            "name": "Harmonogram: interwał w sekundach",
+            "type": "DEPENDENT",
+            "key": "updates.monitor.health.interval_seconds",
+            "delay": "0",
+            "history": "30d",
+            "trends": "365d",
+            "value_type": "UNSIGNED",
+            "preprocessing": [
+              {
+                "type": "JSONPATH",
+                "parameters": [
+                  "$.interval_seconds"
+                ]
+              }
+            ],
+            "master_item": {
+              "key": "updates.monitor.health"
+            },
+            "units": "s"
+          },
+          {
+            "uuid": "4e485544bb4347c9a0a31d0493c1c3bd",
+            "name": "Harmonogram: czas odczytu stanu",
+            "type": "DEPENDENT",
+            "key": "updates.monitor.health.updated_at",
+            "delay": "0",
+            "history": "30d",
+            "trends": "365d",
+            "value_type": "UNSIGNED",
+            "preprocessing": [
+              {
+                "type": "JSONPATH",
+                "parameters": [
+                  "$.updated_at"
+                ]
+              }
+            ],
+            "master_item": {
+              "key": "updates.monitor.health"
+            }
+          }
+        ],
+        "valuemaps": [
+          {
+            "uuid": "d69bb0de197a4e26b8c55ad01e5c4ae1",
+            "name": "Stan usługi updates-monitor",
+            "mappings": [
+              {
+                "value": "0",
+                "newvalue": "Nieaktywna"
+              },
+              {
+                "value": "1",
+                "newvalue": "Uruchamianie"
+              },
+              {
+                "value": "2",
+                "newvalue": "Aktywna"
+              },
+              {
+                "value": "3",
+                "newvalue": "Zatrzymywanie"
+              },
+              {
+                "value": "4",
+                "newvalue": "Błąd"
+              }
+            ]
+          },
+          {
+            "uuid": "4f10e911b11441848da3243ab17bc8cb",
+            "name": "Stan harmonogramu updates-monitor",
+            "mappings": [
+              {
+                "value": "0",
+                "newvalue": "Wyłączony"
+              },
+              {
+                "value": "1",
+                "newvalue": "Aktywny"
+              }
+            ]
+          }
+        ]
+      }
+    ],
+    "triggers": [
+      {
+        "uuid": "fbf1b94afafe4a678684bbd2a5d58243",
+        "expression": "last(/Updates monitor Debian Ubuntu/updates.monitor.regular)>0 and last(/Updates monitor Debian Ubuntu/updates.monitor.valid)=1",
+        "recovery_mode": "RECOVERY_EXPRESSION",
+        "recovery_expression": "last(/Updates monitor Debian Ubuntu/updates.monitor.regular)=0 and last(/Updates monitor Debian Ubuntu/updates.monitor.valid)=1",
+        "name": "Dostępne aktualizacje regularne",
+        "opdata": "Aktualna liczba pakietów: {ITEM.LASTVALUE1}",
+        "priority": "INFO",
+        "description": "Problem zamyka się po udanym sprawdzeniu, które wykazało zero w tej grupie.",
+        "event_name": "Dostępne aktualizacje regularne ({ITEM.VALUE1})"
+      },
+      {
+        "uuid": "3e8b83b629004344ba3526bf5a2dfe43",
+        "expression": "last(/Updates monitor Debian Ubuntu/updates.monitor.security)>0 and last(/Updates monitor Debian Ubuntu/updates.monitor.valid)=1",
+        "recovery_mode": "RECOVERY_EXPRESSION",
+        "recovery_expression": "last(/Updates monitor Debian Ubuntu/updates.monitor.security)=0 and last(/Updates monitor Debian Ubuntu/updates.monitor.valid)=1",
+        "name": "Dostępne aktualizacje bezpieczeństwa",
+        "opdata": "Aktualna liczba pakietów: {ITEM.LASTVALUE1}",
+        "priority": "WARNING",
+        "description": "Problem zamyka się po udanym sprawdzeniu, które wykazało zero w tej grupie.",
+        "event_name": "Dostępne aktualizacje bezpieczeństwa ({ITEM.VALUE1})"
+      },
+      {
+        "uuid": "184b4e8e3f4f462986dbf1f37f02422d",
+        "expression": "last(/Updates monitor Debian Ubuntu/updates.monitor.kernel_security)>0 and last(/Updates monitor Debian Ubuntu/updates.monitor.valid)=1",
+        "recovery_mode": "RECOVERY_EXPRESSION",
+        "recovery_expression": "last(/Updates monitor Debian Ubuntu/updates.monitor.kernel_security)=0 and last(/Updates monitor Debian Ubuntu/updates.monitor.valid)=1",
+        "name": "Dostępne aktualizacje kernela",
+        "opdata": "Aktualna liczba pakietów: {ITEM.LASTVALUE1}",
+        "priority": "DISASTER",
+        "description": "Problem zamyka się po udanym sprawdzeniu, które wykazało zero w tej grupie.",
+        "event_name": "Dostępne aktualizacje kernela ({ITEM.VALUE1})"
+      },
+      {
+        "uuid": "fec7454b52dd44dea8d0b55ea11e832c",
+        "expression": "max(/Updates monitor Debian Ubuntu/updates.monitor.valid,2m)=0 and last(/Updates monitor Debian Ubuntu/updates.monitor.health.valid)=1 and (last(/Updates monitor Debian Ubuntu/updates.monitor.health.service_state)=0 or last(/Updates monitor Debian Ubuntu/updates.monitor.health.service_state)=4)",
+        "name": "Nie powiodło się sprawdzanie aktualizacji",
+        "priority": "WARNING",
+        "description": "Brak poprawnej kontroli przez co najmniej 2 minuty; alarm jest wstrzymany, gdy kontrola trwa."
+      },
+      {
+        "uuid": "5c73a595e4624a07923e8859fb949c14",
+        "expression": "nodata(/Updates monitor Debian Ubuntu/updates.monitor.raw,10m)=1",
+        "name": "Brak danych monitora aktualizacji przez 10 minut",
+        "priority": "WARNING",
+        "description": "Sprawdź połączenie z agentem i jego konfigurację."
+      },
+      {
+        "uuid": "10fc6a8aa8614368938d59a1e81ad809",
+        "name": "Harmonogram sprawdzania aktualizacji jest wyłączony",
+        "expression": "last(/Updates monitor Debian Ubuntu/updates.monitor.health.valid)=1 and last(/Updates monitor Debian Ubuntu/updates.monitor.health.scheduler_active)=0",
+        "priority": "WARNING"
+      },
+      {
+        "uuid": "666ffc0fbeb54f6f97240876e497447d",
+        "name": "Usługa sprawdzania aktualizacji zakończyła się błędem",
+        "expression": "last(/Updates monitor Debian Ubuntu/updates.monitor.health.valid)=1 and last(/Updates monitor Debian Ubuntu/updates.monitor.health.service_failed)=1",
+        "priority": "WARNING"
+      },
+      {
+        "uuid": "d8c81d3162ac4fd2b79e522c8c9e640a",
+        "name": "Brak aktualnego stanu harmonogramu aktualizacji",
+        "expression": "max(/Updates monitor Debian Ubuntu/updates.monitor.health.valid,3m)=0 or nodata(/Updates monitor Debian Ubuntu/updates.monitor.health,5m)=1 or (last(/Updates monitor Debian Ubuntu/updates.monitor.health.updated_at)>0 and now()-last(/Updates monitor Debian Ubuntu/updates.monitor.health.updated_at)>180)",
+        "priority": "WARNING"
+      },
+      {
+        "uuid": "d5305b01e2bf47c3b12d19138b119bb0",
+        "name": "Wynik sprawdzania aktualizacji jest nieaktualny",
+        "expression": "last(/Updates monitor Debian Ubuntu/updates.monitor.health.valid)=1 and last(/Updates monitor Debian Ubuntu/updates.monitor.health.scheduler_active)=1 and last(/Updates monitor Debian Ubuntu/updates.monitor.checked_at)>0 and now()-last(/Updates monitor Debian Ubuntu/updates.monitor.checked_at)>last(/Updates monitor Debian Ubuntu/updates.monitor.health.interval_seconds)+1200",
+        "priority": "WARNING"
+      }
+    ]
+  }
+}

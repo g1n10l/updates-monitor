@@ -12,7 +12,7 @@ Wyniki są podzielone na trzy kategorie:
 | Aktualizacje bezpieczeństwa | Żółty wyzwalacz z liczbą pakietów |
 | Aktualizacje bezpieczeństwa kernela | Czerwony wyzwalacz z liczbą pakietów |
 
-Zabbix otrzymuje również czas ostatniej kontroli, stan harmonogramu i stan usługi. Szablon Zabbixa jest dołączony do pakietu instalacyjnego jako `/usr/share/updates-monitor/zabbix-updates-monitor.json`. Instalator konfiguruje odczyt danych przez istniejącego Zabbix agenta lub agenta 2. Agenta trzeba zainstalować i skonfigurować osobno.
+Zabbix otrzymuje również czas ostatniej kontroli, stan harmonogramu i stan usługi. Publiczny [szablon Zabbixa](template/updates-monitor.json) jest również dołączony do pakietu instalacyjnego jako `/usr/share/updates-monitor/zabbix-updates-monitor.json`. Instalator konfiguruje odczyt danych przez istniejącego Zabbix agenta lub agenta 2. Agenta trzeba zainstalować i skonfigurować osobno.
 
 ## Kiedy sprawdza aktualizacje
 
@@ -74,7 +74,7 @@ journalctl -u updates-monitor.service -n 50 --no-pager
 
 ## Zabbix i pliki
 
-Po instalacji zaimportuj `/usr/share/updates-monitor/zabbix-updates-monitor.json` do Zabbixa i przypisz szablon `Updates monitor Debian Ubuntu` do hosta. Ustaw `Server` oraz, jeśli używasz aktywnych kontroli, `ServerActive` w konfiguracji agenta.
+Po instalacji zaimportuj [szablon](template/updates-monitor.json) lub `/usr/share/updates-monitor/zabbix-updates-monitor.json` do Zabbixa i przypisz szablon `Updates monitor Debian Ubuntu` do hosta. Ustaw `Server` oraz, jeśli używasz aktywnych kontroli, `ServerActive` w konfiguracji agenta.
 
 | Ścieżka | Zawartość |
 | --- | --- |
