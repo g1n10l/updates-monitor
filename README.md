@@ -1,33 +1,33 @@
 # updates-monitor
 
-`updates-monitor` sprawdza dostępne aktualizacje systemu i przekazuje ich liczbę do Zabbixa. Nie instaluje ani nie usuwa pakietów.
+`updates-monitor` checks for available system updates and sends package counts to Zabbix. It does not install or remove packages.
 
-## Co monitoruje
+## What it monitors
 
-Wyniki są podzielone na trzy kategorie:
+The results are split into three categories:
 
-| Kategoria | Znaczenie w Zabbixie |
+| Category | Zabbix alert |
 | --- | --- |
-| Aktualizacje regularne | Niebieski wyzwalacz z liczbą pakietów |
-| Aktualizacje bezpieczeństwa | Żółty wyzwalacz z liczbą pakietów |
-| Aktualizacje bezpieczeństwa kernela | Czerwony wyzwalacz z liczbą pakietów |
+| Regular updates | Blue alert showing the package count |
+| Security updates | Yellow alert showing the package count |
+| Security kernel updates | Red alert showing the package count |
 
-Zabbix otrzymuje również czas ostatniej kontroli, stan harmonogramu i stan usługi. Publiczny [szablon Zabbixa](template/updates-monitor.json) jest również dołączony do pakietu instalacyjnego jako `/usr/share/updates-monitor/zabbix-updates-monitor.json`. Instalator konfiguruje odczyt danych przez istniejącego Zabbix agenta lub agenta 2. Agenta trzeba zainstalować i skonfigurować osobno.
+Zabbix also receives the time of the last check, the schedule status, and the service status. The public [Zabbix template](template/updates-monitor.json) is included in the installation package at `/usr/share/updates-monitor/zabbix-updates-monitor.json`. The installer configures an existing Zabbix agent or agent 2 to read the results. Install and configure the agent separately.
 
-## Kiedy sprawdza aktualizacje
+## When checks run
 
-- Domyślny interwał wynosi **1 dzień**. Dostępne wartości to `2h`, `6h`, `12h`, `1D`, `5D`, `10D` i `15D`.
-- Cron sprawdza harmonogram co minutę. Pierwszą kontrolę zleca około minuty po uruchomieniu systemu.
-- Na Debianie i Ubuntu zmiana bazy pakietów dpkg zleca dodatkową kontrolę po zwolnieniu blokad menedżera pakietów. Dzięki temu instalacja aktualizacji może zmienić liczniki bez restartu systemu, zwykle w ciągu minuty.
-- Po restarcie liczniki zaczynają od zera, a wynik pozostaje oznaczony jako nieważny do pierwszej udanej kontroli. Po błędzie zachowane liczby także są oznaczone jako nieważne.
+- The default interval is **one day**. Available values are `2h`, `6h`, `12h`, `1D`, `5D`, `10D`, and `15D`.
+- Cron checks the schedule every minute. The first check is scheduled about one minute after boot.
+- On Debian and Ubuntu, a change to the dpkg package database schedules another check after the package manager releases its locks. Installing updates can therefore change the counts without a reboot, usually within a minute.
+- After a reboot, the counts start at zero and the result remains marked invalid until the first successful check. After an error, the previous counts are retained but marked invalid.
 
-Kontrola korzysta z danych repozytoriów pakietów. Dostęp do nich oraz działający cron są potrzebne do terminowych wyników.
+Checks use package repository metadata. Timely results require repository access and a running cron service.
 
-## Instalacja
+## Installation
 
-### Debian i Ubuntu
+### Debian and Ubuntu
 
-Pobierz [pakiet DEB 0.5.2-1](installers/updates-monitor_0.5.2-1_all.deb). Plik instalacyjny musi być pakietem DEB, a nie stroną HTML z GitHuba.
+Download the [DEB package, version 0.5.2-1](installers/updates-monitor_0.5.2-1_all.deb). The downloaded file must be a DEB package, not a GitHub HTML page.
 
 ```sh
 curl -fL -o updates-monitor.deb https://raw.githubusercontent.com/g1n10l/updates-monitor/main/installers/updates-monitor_0.5.2-1_all.deb
@@ -35,17 +35,17 @@ echo 'f299b18fa236dc75b5d6543978719c6b01e06b03913d2d047154f997c9cf6415  updates-
 sudo dpkg -i updates-monitor.deb
 ```
 
-Pakiet wymaga `python3`, `python3-apt`, `apt`, `systemd`, `util-linux` i `cron`. Jeśli `dpkg` zgłosi brakujące zależności, użyj `sudo apt --fix-broken install`.
+The package depends on `python3`, `python3-apt`, `apt`, `systemd`, `util-linux`, and `cron`. If `dpkg` reports missing dependencies, run `sudo apt --fix-broken install`.
 
-Deinstalacja wraz z konfiguracją pakietu:
+To remove the package and its configuration:
 
 ```sh
 sudo apt purge updates-monitor
 ```
 
-### Rodzina Red Hat
+### Red Hat family
 
-Pakiet [RPM 0.5.0-1](installers/updates-monitor-0.5.0-1.noarch.rpm) jest wersją eksperymentalną. Jego działania nie zweryfikowano na działającym systemie RHEL; pakiet nie jest podpisany.
+The [RPM package, version 0.5.0-1](installers/updates-monitor-0.5.0-1.noarch.rpm), is experimental. It has not been verified on a running RHEL system and is unsigned.
 
 ```sh
 curl -fL -o updates-monitor-0.5.0-1.noarch.rpm https://raw.githubusercontent.com/g1n10l/updates-monitor/main/installers/updates-monitor-0.5.0-1.noarch.rpm
@@ -53,9 +53,9 @@ echo '566e2eb97a7642466581aa1b5a0d6554d574eb3e5e588c071640f26ece33d3d4  updates-
 sudo dnf install updates-monitor-0.5.0-1.noarch.rpm
 ```
 
-Deinstalacja: `sudo dnf remove updates-monitor`. Po usunięciu RPM pliki konfiguracji i harmonogramu mogą pozostać na dysku.
+To remove it, run `sudo dnf remove updates-monitor`. Configuration and schedule files may remain after removing the RPM.
 
-## Użycie
+## Usage
 
 ```sh
 sudo updates-monitor status
@@ -64,30 +64,30 @@ sudo updates-monitor interval 1D
 man updates-monitor
 ```
 
-`status` uruchamia bieżącą kontrolę również przy wyłączonym harmonogramie. Wyświetla liczniki, czas ostatniej udanej kontroli, interwał i stan usług. Jeśli uruchomienie usługi się nie powiedzie, pokazuje ostatnie błędy z `journalctl`.
+`status` runs a check even when the schedule is disabled. It shows package counts, the time of the last successful check, the interval, and service status. If the service failed to start, it also shows recent errors from `journalctl`.
 
-Usługa wykonuje pojedynczą kontrolę i po jej zakończeniu może mieć stan `inactive`. Harmonogram działa przez cron. Dziennik można odczytać poleceniem:
+The service performs one check and may show as `inactive` when it finishes. Cron runs the schedule. Read the service log with:
 
 ```sh
 journalctl -u updates-monitor.service -n 50 --no-pager
 ```
 
-## Zabbix i pliki
+## Zabbix and files
 
-Po instalacji zaimportuj [szablon](template/updates-monitor.json) lub `/usr/share/updates-monitor/zabbix-updates-monitor.json` do Zabbixa i przypisz szablon `Updates monitor Debian Ubuntu` do hosta. Ustaw `Server` oraz, jeśli używasz aktywnych kontroli, `ServerActive` w konfiguracji agenta.
+Import the [template](template/updates-monitor.json) or `/usr/share/updates-monitor/zabbix-updates-monitor.json` into Zabbix, then link `Updates monitor Debian Ubuntu` to the host. Set `Server` and, if using active checks, `ServerActive` in the agent configuration.
 
-| Ścieżka | Zawartość |
+| Path | Purpose |
 | --- | --- |
-| `/etc/cron.d/updates-monitor` | Zadania harmonogramu |
-| `/etc/updates-monitor/schedule.json` | Włączony harmonogram i interwał |
-| `/etc/zabbix/updates-monitor/agent.conf` | Klucze agenta Zabbix |
-| `/run/updates-monitor/state.json` | Liczniki i ważność ostatniego wyniku |
-| `/run/updates-monitor/health.json` | Stan usługi i harmonogramu |
+| `/etc/cron.d/updates-monitor` | Cron jobs |
+| `/etc/updates-monitor/schedule.json` | Schedule status and interval |
+| `/etc/zabbix/updates-monitor/agent.conf` | Zabbix agent keys |
+| `/run/updates-monitor/state.json` | Package counts and result validity |
+| `/run/updates-monitor/health.json` | Service and schedule status |
 
-## Ograniczenia liczenia
+## Counting limits
 
-Na Debianie i Ubuntu skrypt rozpoznaje archiwa bezpieczeństwa po nazwie kończącej się na `-security` i analizuje plan `full-upgrade`. Niestandardowe źródła oraz część Ubuntu ESM mogą zostać zaliczone do aktualizacji regularnych. Nowe pakiety kernela z archiwum bezpieczeństwa są liczone; część innych nowych zależności i pakietów wstrzymanych może zostać pominięta.
+On Debian and Ubuntu, the script identifies security archives by the `-security` suffix and examines a `full-upgrade` plan. Custom repositories and some Ubuntu ESM updates may be counted as regular updates. New kernel packages from security archives are counted; some other new dependencies and held packages may be omitted.
 
-W wersji RPM klasyfikacja bezpieczeństwa zależy od metadanych `updateinfo` w repozytorium DNF. Liczniki oznaczają pakiety, a nie liczbę podatności.
+For the RPM version, security classification depends on DNF repository `updateinfo` metadata. Counts represent packages, not vulnerabilities.
 
-Projekt stworzył **G1n10L**.
+Created by **G1n10L**.
