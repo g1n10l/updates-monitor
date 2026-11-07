@@ -12,7 +12,11 @@
         "uuid": "ac17075fc25f43c082fd459ebe1cf892",
         "template": "Updates monitor Debian Ubuntu",
         "name": "Updates monitor Debian Ubuntu",
-        "description": "Monitorowanie aktualizacji APT przez updates-monitor i agenta Zabbix.",
+        "description": "Monitorowanie aktualizacji systemu przez updates-monitor i agenta Zabbix. Autor: G1n10L. Trzecia kategoria obejmuje wszystkie aktualizacje kernela.",
+        "vendor": {
+          "name": "G1n10L",
+          "version": "0.5.4"
+        },
         "groups": [
           {
             "name": "Templates"
@@ -72,9 +76,10 @@
           },
           {
             "uuid": "95ecf4b6899449c9a820e12410f21552",
-            "name": "Aktualizacje bezpieczeństwa kernela",
+            "name": "Aktualizacje kernela",
             "type": "DEPENDENT",
             "key": "updates.monitor.kernel_security",
+            "description": "Wszystkie dostępne aktualizacje pakietów kernela; klucz zachowano dla zgodności z wcześniejszymi wersjami.",
             "delay": "0",
             "history": "30d",
             "trends": "365d",
@@ -352,7 +357,7 @@
         "name": "Dostępne aktualizacje kernela",
         "opdata": "Aktualna liczba pakietów: {ITEM.LASTVALUE1}",
         "priority": "DISASTER",
-        "description": "Problem zamyka się po udanym sprawdzeniu, które wykazało zero w tej grupie.",
+        "description": "Obejmuje wszystkie aktualizacje kernela, także spoza repozytorium bezpieczeństwa. Problem zamyka się po udanym sprawdzeniu, które wykazało zero w tej grupie.",
         "event_name": "Dostępne aktualizacje kernela ({ITEM.VALUE1})"
       },
       {

@@ -10,7 +10,7 @@ The results are split into three categories:
 | --- | --- |
 | Regular updates | Blue alert showing the package count |
 | Security updates | Yellow alert showing the package count |
-| Security kernel updates | Red alert showing the package count |
+| Kernel updates (all sources) | Red alert showing the package count |
 
 Zabbix also receives the time of the last check, the schedule status, and the service status. The public [Zabbix template](template/updates-monitor.json) is included in the installation package at `/usr/share/updates-monitor/zabbix-updates-monitor.json`. The installer configures an existing Zabbix agent or agent 2 to read the results. Install and configure the agent separately.
 
@@ -27,15 +27,17 @@ Checks use package repository metadata. Timely results require repository access
 
 ### Debian and Ubuntu
 
-Download the [DEB package, version 0.5.2-1](installers/updates-monitor_0.5.2-1_all.deb). The downloaded file must be a DEB package, not a GitHub HTML page.
+Download the [DEB package, version 0.5.4-1](installers/updates-monitor_0.5.4-1_all.deb). The downloaded file must be a DEB package, not a GitHub HTML page.
 
 ```sh
-curl -fL -o updates-monitor.deb https://raw.githubusercontent.com/g1n10l/updates-monitor/main/installers/updates-monitor_0.5.2-1_all.deb
-echo 'f299b18fa236dc75b5d6543978719c6b01e06b03913d2d047154f997c9cf6415  updates-monitor.deb' | sha256sum -c -
+curl -fL -o updates-monitor.deb https://raw.githubusercontent.com/g1n10l/updates-monitor/main/installers/updates-monitor_0.5.4-1_all.deb
+echo 'de454c69804fb6084b2c5495bb8074e892c1bb9e4c37e93a0ce92f864cdc2f07  updates-monitor.deb' | sha256sum -c -
 sudo dpkg -i updates-monitor.deb
 ```
 
 The package depends on `python3`, `python3-apt`, `apt`, `systemd`, `util-linux`, and `cron`. If `dpkg` reports missing dependencies, run `sudo apt --fix-broken install`.
+
+An alternative [RUN installer](installers/updates-monitor-installer.run) is available for Debian and Ubuntu. It installs into `/usr/local` and does not provide a package manager uninstall command.
 
 To remove the package and its configuration:
 
@@ -45,12 +47,12 @@ sudo apt purge updates-monitor
 
 ### Red Hat family
 
-The [RPM package, version 0.5.0-1](installers/updates-monitor-0.5.0-1.noarch.rpm), is experimental. It has not been verified on a running RHEL system and is unsigned.
+The [RPM package, version 0.5.4-1](installers/updates-monitor-0.5.4-1.noarch.rpm), is experimental. It has not been verified on a running RHEL system and is unsigned.
 
 ```sh
-curl -fL -o updates-monitor-0.5.0-1.noarch.rpm https://raw.githubusercontent.com/g1n10l/updates-monitor/main/installers/updates-monitor-0.5.0-1.noarch.rpm
-echo '566e2eb97a7642466581aa1b5a0d6554d574eb3e5e588c071640f26ece33d3d4  updates-monitor-0.5.0-1.noarch.rpm' | sha256sum -c -
-sudo dnf install updates-monitor-0.5.0-1.noarch.rpm
+curl -fL -o updates-monitor-0.5.4-1.noarch.rpm https://raw.githubusercontent.com/g1n10l/updates-monitor/main/installers/updates-monitor-0.5.4-1.noarch.rpm
+echo '7befeafa02618741c992183015e06a4ff60b987052feb728d6ffaa8494cba0c9  updates-monitor-0.5.4-1.noarch.rpm' | sha256sum -c -
+sudo dnf install updates-monitor-0.5.4-1.noarch.rpm
 ```
 
 To remove it, run `sudo dnf remove updates-monitor`. Configuration and schedule files may remain after removing the RPM.
@@ -86,8 +88,8 @@ Import the [template](template/updates-monitor.json) or `/usr/share/updates-moni
 
 ## Counting limits
 
-On Debian and Ubuntu, the script identifies security archives by the `-security` suffix and examines a `full-upgrade` plan. Custom repositories and some Ubuntu ESM updates may be counted as regular updates. New kernel packages from security archives are counted; some other new dependencies and held packages may be omitted.
+On Debian and Ubuntu, the script identifies security archives by the `-security` suffix and examines a `full-upgrade` plan. All kernel upgrades and new kernel packages are counted in the kernel category, regardless of source. Custom repositories and some Ubuntu ESM updates may be counted as regular updates. Some other new dependencies and held packages may be omitted.
 
-For the RPM version, security classification depends on DNF repository `updateinfo` metadata. Counts represent packages, not vulnerabilities.
+For the RPM version, security classification depends on DNF repository `updateinfo` metadata. All kernel upgrade candidates are counted in the kernel category, regardless of security metadata. Counts represent packages, not vulnerabilities.
 
 Created by **G1n10L**.
