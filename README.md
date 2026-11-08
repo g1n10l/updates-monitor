@@ -39,6 +39,8 @@ sudo dpkg -i updates-monitor.deb
 
 The package depends on `python3`, `python3-apt`, `apt`, `systemd`, `util-linux`, and `cron`. If `dpkg` reports missing dependencies, run `sudo apt --fix-broken install`.
 
+An alternative [RUN installer](installers/updates-monitor-installer.run) is available for Debian and Ubuntu. It installs into `/usr/local` and does not provide a package manager uninstall command.
+
 To remove the package and its configuration:
 
 ```sh
@@ -88,7 +90,7 @@ Import the [template](template/updates-monitor.json) or `/usr/share/updates-moni
 
 ## Counting limits
 
-On Debian and Ubuntu, the script identifies security archives by the `-security` suffix and examines a `full-upgrade` plan. Custom repositories and some Ubuntu ESM updates may be counted as regular updates. New kernel packages from security archives are counted; some other new dependencies and held packages may be omitted.
+On Debian and Ubuntu, the script identifies security archives by the `-security` suffix and examines a `full-upgrade` plan. All kernel upgrades and new kernel packages are counted in the kernel category, regardless of source. Custom repositories and some Ubuntu ESM updates may be counted as regular updates. Some other new dependencies and held packages may be omitted.
 
 For the RPM version, security classification depends on DNF repository `updateinfo` metadata. Each check counts package candidates; the cumulative totals count repeated observations of the same packages and do not represent vulnerabilities.
 
