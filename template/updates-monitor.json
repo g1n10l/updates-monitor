@@ -12,7 +12,11 @@
         "uuid": "ac17075fc25f43c082fd459ebe1cf892",
         "template": "Updates monitor Debian Ubuntu",
         "name": "Updates monitor Debian Ubuntu",
-        "description": "Monitorowanie aktualizacji APT przez updates-monitor i agenta Zabbix.",
+        "description": "Monitorowanie aktualizacji systemu przez updates-monitor i agenta Zabbix. Autor: G1n10L. Liczniki sumują wyniki kolejnych kontroli i zerują się, gdy w kategorii nie ma aktualizacji. Trzecia kategoria obejmuje wszystkie aktualizacje kernela.",
+        "vendor": {
+          "name": "G1n10L",
+          "version": "0.5.5"
+        },
         "groups": [
           {
             "name": "Templates"
@@ -30,7 +34,7 @@
           },
           {
             "uuid": "53e24c6dac444f7785c8fa29a25ba350",
-            "name": "Aktualizacje regularne",
+            "name": "Suma kontroli: aktualizacje regularne",
             "type": "DEPENDENT",
             "key": "updates.monitor.regular",
             "delay": "0",
@@ -51,7 +55,7 @@
           },
           {
             "uuid": "0ee9cbdb26fc4c8bacc229e5f5bf2c25",
-            "name": "Aktualizacje bezpieczeństwa",
+            "name": "Suma kontroli: aktualizacje bezpieczeństwa",
             "type": "DEPENDENT",
             "key": "updates.monitor.security",
             "delay": "0",
@@ -72,9 +76,10 @@
           },
           {
             "uuid": "95ecf4b6899449c9a820e12410f21552",
-            "name": "Aktualizacje bezpieczeństwa kernela",
+            "name": "Suma kontroli: aktualizacje kernela",
             "type": "DEPENDENT",
             "key": "updates.monitor.kernel_security",
+            "description": "Wszystkie dostępne aktualizacje pakietów kernela; klucz zachowano dla zgodności z wcześniejszymi wersjami.",
             "delay": "0",
             "history": "30d",
             "trends": "365d",
@@ -328,9 +333,9 @@
         "recovery_mode": "RECOVERY_EXPRESSION",
         "recovery_expression": "last(/Updates monitor Debian Ubuntu/updates.monitor.regular)=0 and last(/Updates monitor Debian Ubuntu/updates.monitor.valid)=1",
         "name": "Dostępne aktualizacje regularne",
-        "opdata": "Aktualna liczba pakietów: {ITEM.LASTVALUE1}",
+        "opdata": "Suma wyników kontroli: {ITEM.LASTVALUE1}",
         "priority": "INFO",
-        "description": "Problem zamyka się po udanym sprawdzeniu, które wykazało zero w tej grupie.",
+        "description": "Licznik sumuje wynik każdej udanej kontroli z poprzednią wartością. Problem zamyka się po udanym sprawdzeniu, które wykazało zero w tej grupie.",
         "event_name": "Dostępne aktualizacje regularne ({ITEM.VALUE1})"
       },
       {
@@ -339,9 +344,9 @@
         "recovery_mode": "RECOVERY_EXPRESSION",
         "recovery_expression": "last(/Updates monitor Debian Ubuntu/updates.monitor.security)=0 and last(/Updates monitor Debian Ubuntu/updates.monitor.valid)=1",
         "name": "Dostępne aktualizacje bezpieczeństwa",
-        "opdata": "Aktualna liczba pakietów: {ITEM.LASTVALUE1}",
+        "opdata": "Suma wyników kontroli: {ITEM.LASTVALUE1}",
         "priority": "WARNING",
-        "description": "Problem zamyka się po udanym sprawdzeniu, które wykazało zero w tej grupie.",
+        "description": "Licznik sumuje wynik każdej udanej kontroli z poprzednią wartością. Problem zamyka się po udanym sprawdzeniu, które wykazało zero w tej grupie.",
         "event_name": "Dostępne aktualizacje bezpieczeństwa ({ITEM.VALUE1})"
       },
       {
@@ -350,9 +355,9 @@
         "recovery_mode": "RECOVERY_EXPRESSION",
         "recovery_expression": "last(/Updates monitor Debian Ubuntu/updates.monitor.kernel_security)=0 and last(/Updates monitor Debian Ubuntu/updates.monitor.valid)=1",
         "name": "Dostępne aktualizacje kernela",
-        "opdata": "Aktualna liczba pakietów: {ITEM.LASTVALUE1}",
+        "opdata": "Suma wyników kontroli: {ITEM.LASTVALUE1}",
         "priority": "DISASTER",
-        "description": "Problem zamyka się po udanym sprawdzeniu, które wykazało zero w tej grupie.",
+        "description": "Obejmuje wszystkie aktualizacje kernela, także spoza repozytorium bezpieczeństwa. Licznik sumuje wynik każdej udanej kontroli z poprzednią wartością. Problem zamyka się po udanym sprawdzeniu, które wykazało zero w tej grupie.",
         "event_name": "Dostępne aktualizacje kernela ({ITEM.VALUE1})"
       },
       {
