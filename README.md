@@ -39,7 +39,7 @@ sudo dpkg -i updates-monitor.deb
 
 The package depends on `python3`, `python3-apt`, `apt`, `systemd`, `util-linux`, and `cron`. If `dpkg` reports missing dependencies, run `sudo apt --fix-broken install`.
 
-The RUN installer can be built from [source](updates-monitor/build-installer.py). It installs into `/usr/local` and does not provide a package manager uninstall command.
+The RUN installer can be built from [source](source-code/build-installer.py). It installs into `/usr/local` and does not provide a package manager uninstall command.
 
 To remove the package and its configuration:
 
@@ -100,13 +100,13 @@ Created by **G1n10L**.
 ## Source code and builds
 
 The complete source code, package definitions and tests are in
-[`updates-monitor/`](updates-monitor/). Ready-built packages remain in
+[`source-code/`](source-code/). Ready-built packages remain in
 [`install/`](install/), and the published Zabbix template is in
 [`template/`](template/).
 
 ```text
 updates-monitor/
-├── updates-monitor/    # Source code, documentation, packaging and tests
+├── source-code/        # Source code, documentation, packaging and tests
 ├── install/            # DEB and RPM packages
 └── template/           # Published Zabbix template
 ```
@@ -114,20 +114,20 @@ updates-monitor/
 From the repository root, build packages with:
 
 ```sh
-python3 updates-monitor/build-deb.py
-python3 updates-monitor/build-installer.py
-bash updates-monitor/redhat/build-rpm.sh
+python3 source-code/build-deb.py
+python3 source-code/build-installer.py
+bash source-code/redhat/build-rpm.sh
 ```
 
 The RPM build requires the tools described in the
-[RPM build notes](updates-monitor/redhat/README.txt). Generated files go to
-`install/`. The [source manual](updates-monitor/README.md) and
-[Polish instructions](updates-monitor/README.txt) describe operation and packaging.
+[RPM build notes](source-code/redhat/README.txt). Generated files go to
+`install/`. The [source manual](source-code/README.md) and
+[Polish instructions](source-code/README.txt) describe operation and packaging.
 
 Run the isolated checks with:
 
 ```sh
-for test in updates-monitor/tests/test_*.py; do
+for test in source-code/tests/test_*.py; do
     python3 "$test" || exit 1
 done
 ```
