@@ -1,0 +1,27 @@
+#!/bin/sh
+set -eu
+if [ -e /usr/local/lib/updates-monitor/check.py ]; then
+    echo 'Wykryto instalację updates-monitor w /usr/local.' >&2
+    echo 'Przed instalacją pakietu usuń starą instalację ręcznie zgodnie z dokumentacją.' >&2
+    exit 1
+fi
+if [ "${1:-}" = upgrade ] && [ -d /run/systemd/system ]; then
+    if [ ! -f /etc/updates-monitor/schedule.json ]; then
+        /usr/bin/python3 - <<'PY'
+import json, pathlib, re, subprocess
+p = subprocess.run(['/usr/bin/systemctl', 'cat', 'updates-monitor.timer'], capture_output=True, text=True)
+if p.returncode == 0:
+    values = re.findall(r'^[ \t]*OnUnitActiveSec[ \t]*=[ \t]*([^\r\n]*)', p.stdout, re.MULTILINE)
+    interval = next((x.strip() for x in reversed(values) if x.strip()), '1h')
+    if interval not in ('1h', '6h', '15h', '1d', '3d', '8d'):
+        interval = '1h'
+    enabled = subprocess.run(['/usr/bin/systemctl', 'is-enabled', '--quiet', 'updates-monitor.timer']).returncode == 0
+    dest = pathlib.Path('/var/lib/updates-monitor/legacy-schedule.json')
+    dest.parent.mkdir(parents=True, exist_ok=True)
+    dest.write_text(json.dumps({'enabled': enabled, 'interval': interval}) + '\n')
+PY
+    fi
+    for timer in updates-monitor.timer updates-monitor-health.timer; do
+        systemctl disable --now "$timer" 2>/dev/null || true
+    done
+fi

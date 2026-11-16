@@ -1,0 +1,6 @@
+[Unit]
+Description=Harmonogram cron i stan usługi updates-monitor
+
+[Service]
+Type=oneshot
+ExecStart=/usr/local/lib/updates-monitor/scheduler.py tick

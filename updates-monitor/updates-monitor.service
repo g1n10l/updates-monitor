@@ -1,0 +1,8 @@
+[Unit]
+Description=Sprawdzenie aktualizacji systemu
+Wants=network-online.target
+After=network-online.target
+
+[Service]
+Type=oneshot
+ExecStart=/usr/bin/flock -n /run/updates-monitor.lock /usr/local/lib/updates-monitor/check.py

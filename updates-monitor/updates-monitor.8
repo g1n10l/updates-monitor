@@ -1,0 +1,136 @@
+.TH UPDATES-MONITOR 8 "2026-11-05" "updates-monitor" "Administracja systemem"
+.SH NAZWA
+updates-monitor \- sprawdzanie aktualizacji Debiana i Ubuntu
+.SH SKŁADNIA
+.B sudo updates-monitor status
+.br
+.B sudo updates-monitor interval
+.RI { 2h | 6h | 12h | 1D | 5D | 10D | 15D }
+.SH OPIS
+Usługa sprawdza aktualizacje APT
+w trzech kategoriach i udostępnia
+wynik agentowi Zabbix. Nie
+instaluje ani nie usuwa pakietów.
+.PP
+Każda udana kontrola dodaje liczbę
+wykrytych pakietów do zapisanej sumy
+w każdej kategorii. Poprzednie 3 i
+nowe 5 daje 8. Kontrola z wynikiem 0
+zeruje daną kategorię. Ten sam
+pakiet może być liczony ponownie
+przy następnej kontroli.
+.PP
+Cron sprawdza co minutę, czy upłynął
+ustawiony interwał. Domyślny
+interwał to jeden dzień. Pierwsza
+kontrola jest zlecana około minuty
+po starcie systemu. Cron co minutę
+odświeża również stan usługi dla
+Zabbiksa, także po wyłączeniu
+harmonogramu kontroli.
+.PP
+Po zmianie bazy pakietów dpkg cron
+zleca dodatkową kontrolę po zwolnieniu
+blokad APT i dpkg, bez restartu.
+Zwykle następuje to w ciągu minuty.
+.SH POLECENIA
+.TP
+.B status
+Wykonuje kontrolę także przy
+wyłączonym harmonogramie. Pokazuje
+liczby pakietów, czas ostatniej
+udanej kontroli, stan usługi,
+cron, harmonogramu i interwał.
+W razie nieudanego uruchomienia
+pokazuje do 10 ostatnich błędów
+z journalctl, również z poprzednich
+uruchomień.
+.TP
+.BI interval " wartość"
+Ustawia interwał: 2h, 6h, 12h, 1D,
+5D, 10D lub 15D. Zmiana nie włącza
+wyłączonego harmonogramu.
+.PP
+Przy aktualizacji stare interwały są
+zamieniane: 1h na 2h, 15h na 12h,
+1d na 1D, 3d na 5D, 8d na 10D;
+6h pozostaje bez zmian.
+.SH PRZYKŁADY
+.nf
+sudo updates-monitor status
+sudo updates-monitor interval 6h
+.fi
+.SH STAN I BŁĘDY
+Usługa jest typu oneshot i po
+zakończeniu ma stan inactive.
+Harmonogram zapisany w cron działa
+niezależnie od tego stanu.
+.PP
+Wcześniej wyłączony harmonogram można
+ponownie włączyć ręcznie:
+.nf
+sudo systemctl enable --now cron.service
+sudo /usr/lib/updates-monitor/scheduler.py enable 1
+sudo systemctl start --no-block updates-monitor-scheduler.service
+.fi
+W instalacji RUN ścieżka do scheduler.py
+zaczyna się od /usr/local/lib.
+.PP
+Wynik kontroli przechowywany jest
+w pliku
+.IR /run/updates-monitor/state.json .
+Po restarcie liczniki są zerowane,
+a pole valid wynosi 0 do pierwszej
+udanej kontroli. Po błędzie
+zachowywane są ostatnie liczby,
+ale valid zmienia się na 0.
+.PP
+Dziennik usługi:
+.nf
+journalctl -u updates-monitor.service -n 50 --no-pager
+.fi
+.SH OGRANICZENIA
+Archiwa bezpieczeństwa rozpoznawane
+są po nazwie kończącej się na
+-security. Niestandardowe źródła
+oraz część Ubuntu ESM mogą wymagać
+dostosowania. Analizowany jest plan
+full-upgrade. Nowe pakiety kernela
+z archiwum bezpieczeństwa są liczone;
+inne nowe zależności, planowane
+usunięcia i część wstrzymanych
+pakietów mogą być pominięte.
+.SH PLIKI
+.TP
+.I /etc/cron.d/updates-monitor
+Systemowe zadania cron.
+.TP
+.I /etc/updates-monitor/schedule.json
+Stan harmonogramu i interwał.
+.TP
+.I /etc/zabbix/updates-monitor/agent.conf
+Parametry odczytu wyników przez agenta Zabbix.
+.TP
+.I /etc/zabbix/zabbix_agentd.conf
+Konfiguracja Zabbix agent. Instalator dodaje
+odwołanie Include do pliku agent.conf, jeśli
+wykryje ten plik konfiguracji.
+.TP
+.I /etc/zabbix/zabbix_agent2.conf
+Konfiguracja Zabbix agent 2. Instalator dodaje
+odwołanie Include do pliku agent.conf, jeśli
+wykryje ten plik konfiguracji. Parametry Server
+i ServerActive należy ustawić osobno w konfiguracji
+używanego agenta.
+.TP
+.I /run/updates-monitor/state.json
+Skumulowany wynik kontroli.
+.TP
+.I /run/updates-monitor/health.json
+Stan usługi i harmonogramu.
+.SH AUTOR
+Projekt został stworzony przez G1n10L.
+.SH REPOZYTORIUM
+.UR https://github.com/g1n10l/updates-monitor
+Projekt na GitHubie
+.UE

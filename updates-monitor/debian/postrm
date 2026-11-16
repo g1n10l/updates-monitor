@@ -1,0 +1,13 @@
+#!/bin/sh
+set -eu
+if [ "${1:-}" = purge ] && [ -e /sys/fs/selinux/enforce ] && command -v semanage >/dev/null; then
+    if semanage fcontext -l -C | grep -F '/run/updates-monitor(/.*)?' >/dev/null; then
+        semanage fcontext -d '/run/updates-monitor(/.*)?'
+    fi
+fi
+if [ "${1:-}" = purge ]; then
+    rm -f /etc/updates-monitor/schedule.json /var/lib/updates-monitor/legacy-schedule.json
+    rmdir /etc/updates-monitor /var/lib/updates-monitor 2>/dev/null || true
+fi
+if [ -d /run/systemd/system ]; then systemctl daemon-reload; fi
+exit 0

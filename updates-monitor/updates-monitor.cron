@@ -1,0 +1,4 @@
+SHELL=/bin/sh
+PATH=/usr/sbin:/usr/bin:/sbin:/bin
+* * * * * root /usr/bin/systemctl start --no-block updates-monitor-scheduler.service
+@reboot root sleep 60; /usr/bin/systemctl start --no-block updates-monitor-scheduler.service

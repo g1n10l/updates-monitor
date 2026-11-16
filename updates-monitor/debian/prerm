@@ -1,0 +1,19 @@
+#!/bin/sh
+set -eu
+if [ "${1:-}" = remove ]; then
+    if [ -d /run/systemd/system ]; then
+        systemctl stop updates-monitor-scheduler.service
+        systemctl stop updates-monitor.service
+    fi
+    for config in /etc/zabbix/zabbix_agentd.conf /etc/zabbix/zabbix_agent2.conf; do
+        [ -f "$config" ] || continue
+        sed -i '\|^Include=/etc/zabbix/updates-monitor/agent.conf$|d' "$config"
+        if [ -e /sys/fs/selinux/enforce ] && command -v restorecon >/dev/null; then restorecon "$config"; fi
+    done
+    if [ -d /run/systemd/system ]; then
+        for unit in zabbix-agent.service zabbix-agent2.service; do
+            if systemctl is-active --quiet "$unit"; then systemctl restart "$unit"; fi
+        done
+    fi
+fi
+exit 0

@@ -1,0 +1,46 @@
+#!/bin/sh
+set -eu
+[ "${1:-}" = configure ] || exit 0
+found=0
+for config in /etc/zabbix/zabbix_agentd.conf /etc/zabbix/zabbix_agent2.conf; do
+    [ -f "$config" ] || continue
+    found=1
+done
+if [ "$found" -eq 0 ]; then
+    echo 'Brak agenta Zabbix; wyniki nie będą dostępne w Zabbiksie do czasu instalacji i konfiguracji agenta.' >&2
+fi
+if [ ! -e /etc/zabbix/updates-monitor/agent.conf ]; then
+    install -Dm644 /usr/share/updates-monitor/agent.conf /etc/zabbix/updates-monitor/agent.conf
+fi
+if [ -e /sys/fs/selinux/enforce ]; then
+    command -v semanage >/dev/null && command -v restorecon >/dev/null || {
+        echo 'SELinux wymaga narzędzi semanage i restorecon.' >&2; exit 1;
+    }
+    if [ "$found" -eq 1 ]; then
+        if semanage fcontext -l -C | grep -F '/run/updates-monitor(/.*)?' >/dev/null; then
+            semanage fcontext -m -t zabbix_runtime_t '/run/updates-monitor(/.*)?'
+        else
+            semanage fcontext -a -t zabbix_runtime_t '/run/updates-monitor(/.*)?'
+        fi
+    fi
+    if [ -d /run/updates-monitor ]; then restorecon -RF /run/updates-monitor; fi
+fi
+for config in /etc/zabbix/zabbix_agentd.conf /etc/zabbix/zabbix_agent2.conf; do
+    [ -f "$config" ] || continue
+    if ! grep -Fx 'Include=/etc/zabbix/updates-monitor/agent.conf' "$config" >/dev/null; then
+        printf '\nInclude=/etc/zabbix/updates-monitor/agent.conf\n' >> "$config"
+    fi
+done
+/usr/lib/updates-monitor/scheduler.py init
+if [ -d /run/systemd/system ]; then
+    systemctl daemon-reload
+    systemctl enable --now cron.service
+    for unit in zabbix-agent.service zabbix-agent2.service; do
+        if systemctl is-active --quiet "$unit"; then systemctl restart "$unit"; fi
+    done
+else
+    echo 'Systemd nie jest uruchomiony; uruchom cron i agenta po starcie systemu.' >&2
+fi
+. /usr/lib/updates-monitor/install-message.sh
+updates_monitor_install_message
+exit 0

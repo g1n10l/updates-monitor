@@ -1,0 +1,65 @@
+#!/bin/bash
+set -euo pipefail
+[[ $EUID == 0 ]] || { echo 'Wymagane uprawnienia root.' >&2; exit 1; }
+scheduler=/usr/local/lib/updates-monitor/scheduler.py
+if [[ $# == 1 && $1 == status ]]; then
+    echo 'Trwa sprawdzanie aktualizacji...'
+    result=0
+    service_failed=0
+    if ! systemctl start updates-monitor.service; then
+        echo 'Kontrola nie powiodła się. Szczegóły: journalctl -u updates-monitor.service -n 50 --no-pager' >&2
+        result=1
+        service_failed=1
+    fi
+    if ! /usr/bin/python3 - <<'PY'
+import datetime
+import json
+import sys
+try:
+    with open('/run/updates-monitor/state.json', encoding='utf-8') as f:
+        data = json.load(f)
+    for key, label in [('regular', 'Suma kontroli: aktualizacje regularne'),
+                       ('security', 'Suma kontroli: aktualizacje bezpieczeństwa'),
+                       ('kernel_security', 'Suma kontroli: aktualizacje kernela')]:
+        print(f'{label}: {data[key]}')
+    timestamp = int(data.get('checked_at', 0))
+    print('Ostatnia udana kontrola:', datetime.datetime.fromtimestamp(timestamp).astimezone().strftime('%Y-%m-%d %H:%M:%S %Z') if timestamp else 'brak')
+    if data.get('valid') != 1:
+        print('Wynik nie jest aktualny: ostatnia kontrola się nie powiodła.', file=sys.stderr)
+        sys.exit(1)
+except (OSError, ValueError, KeyError, TypeError) as exc:
+    print('Nie można odczytać wyniku:', exc, file=sys.stderr)
+    sys.exit(1)
+PY
+    then
+        result=1
+    fi
+    service_state=$(systemctl is-active updates-monitor.service || true)
+    cron_state=$(systemctl is-active cron.service || true)
+    cron_enabled=$(systemctl is-enabled cron.service 2>/dev/null || true)
+    if schedule=$("$scheduler" show); then
+        /usr/bin/python3 -c 'import json,sys; d=json.load(sys.stdin); print("Harmonogram: " + ("włączony" if d["enabled"] else "wyłączony")); print("Interwał kontroli: " + d["interval"])' <<< "$schedule"
+    else
+        echo 'Nie można odczytać konfiguracji harmonogramu.' >&2
+        result=1
+    fi
+    echo "Stan usługi: $service_state (usługa kończy pracę po sprawdzeniu)"
+    echo "Stan cron: $cron_state; autostart: $cron_enabled"
+    if [[ $service_failed == 1 ]]; then
+        echo
+        echo 'Ostatnie błędy usługi (do 10 wpisów z journalctl, także z poprzednich uruchomień):'
+        if log=$(journalctl -u updates-monitor.service -p err -n 10 --no-pager --quiet -o short-iso 2>&1); then
+            if [[ -n $log ]]; then printf '%s\n' "$log"; else echo 'Brak zapisanych błędów.'; fi
+        else
+            echo 'Nie można odczytać dziennika usługi.' >&2
+            [[ -z $log ]] || printf '%s\n' "$log" >&2
+            result=1
+        fi
+    fi
+    exit "$result"
+fi
+[[ $# == 2 && $1 == interval ]] || { echo 'Użycie: updates-monitor status | interval {2h|6h|12h|1D|5D|10D|15D}' >&2; exit 2; }
+case "$2" in 2h|6h|12h|1D|5D|10D|15D) ;; *) echo 'Nieobsługiwany interwał.' >&2; exit 2;; esac
+"$scheduler" interval "$2"
+systemctl start --no-block updates-monitor-scheduler.service
+echo "Interwał ustawiony: $2"

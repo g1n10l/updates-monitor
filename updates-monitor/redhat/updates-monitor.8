@@ -1,0 +1,52 @@
+.TH UPDATES-MONITOR 8 "2026-11-05" "updates-monitor" "Administracja systemem"
+.SH NAZWA
+updates-monitor \- sprawdzanie aktualizacji DNF dla Zabbiksa
+.SH SKŁADNIA
+.B sudo updates-monitor status
+.br
+.B sudo updates-monitor interval
+.RI { 2h | 6h | 12h | 1D | 5D | 10D | 15D }
+.SH OPIS
+Program zlicza aktualizacje regularne, bezpieczeństwa oraz bezpieczeństwa
+kernela. Wynik udostępnia agentowi Zabbix. Nie instaluje aktualizacji.
+Harmonogram cron działa domyślnie co jeden dzień. Kontrola jest zlecana
+około minuty po starcie systemu.
+.PP
+Każda udana kontrola dodaje liczbę
+wykrytych pakietów do poprzedniej
+wartości w każdej kategorii. Wynik 0
+zeruje kategorię. Ten sam pakiet może
+być liczony przy kolejnych kontrolach.
+.SH POLECENIA
+.TP
+.B status
+Uruchamia kontrolę i pokazuje liczby pakietów, stan usługi i interwał.
+.TP
+.BI interval " wartość"
+Zmienia interwał na jedną z wartości podanych w składni.
+.SH OGRANICZENIA
+DNF repoquery pokazuje kandydatów, a nie rozwiązaną transakcję.
+Rozpoznawanie aktualizacji bezpieczeństwa wymaga metadanych updateinfo
+w repozytoriach. W razie ich braku wyniki mogą być błędnie sklasyfikowane.
+.SH PLIKI
+.TP
+.I /etc/updates-monitor/schedule.json
+Stan harmonogramu i interwał.
+.TP
+.I /etc/cron.d/updates-monitor
+Zadania cron.
+.TP
+.I /etc/zabbix/updates-monitor/agent.conf
+Parametry agenta Zabbix.
+.TP
+.I /run/updates-monitor/state.json
+Skumulowany wynik kontroli.
+.TP
+.I /run/updates-monitor/health.json
+Stan usługi i harmonogramu.
+.SH AUTOR
+G1n10L
+.SH REPOZYTORIUM
+.UR https://github.com/g1n10l/updates-monitor
+Projekt na GitHubie
+.UE

@@ -29,17 +29,17 @@ Checks use package repository metadata. Timely results require repository access
 
 ### Debian and Ubuntu
 
-Download the [DEB package, version 0.5.5-1](installers/updates-monitor_0.5.5-1_all.deb). The downloaded file must be a DEB package, not a GitHub HTML page.
+Download the [DEB package, version 0.5.5-1](install/updates-monitor_0.5.5-1_all.deb). The downloaded file must be a DEB package, not a GitHub HTML page.
 
 ```sh
-curl -fL -o updates-monitor.deb https://raw.githubusercontent.com/g1n10l/updates-monitor/main/installers/updates-monitor_0.5.5-1_all.deb
+curl -fL -o updates-monitor.deb https://raw.githubusercontent.com/g1n10l/updates-monitor/main/install/updates-monitor_0.5.5-1_all.deb
 echo '82fbf0c13ae0a60fb7090a59518cbf90f8fc311a0c97ff432aa1d16cbe30b022  updates-monitor.deb' | sha256sum -c -
 sudo dpkg -i updates-monitor.deb
 ```
 
 The package depends on `python3`, `python3-apt`, `apt`, `systemd`, `util-linux`, and `cron`. If `dpkg` reports missing dependencies, run `sudo apt --fix-broken install`.
 
-An alternative [RUN installer](installers/updates-monitor-installer.run) is available for Debian and Ubuntu. It installs into `/usr/local` and does not provide a package manager uninstall command.
+The RUN installer can be built from [source](updates-monitor/build-installer.py). It installs into `/usr/local` and does not provide a package manager uninstall command.
 
 To remove the package and its configuration:
 
@@ -49,10 +49,10 @@ sudo apt purge updates-monitor
 
 ### Red Hat family
 
-The [RPM package, version 0.5.5-1](installers/updates-monitor-0.5.5-1.noarch.rpm), is experimental. It has not been verified on a running RHEL system and is unsigned.
+The [RPM package, version 0.5.5-1](install/updates-monitor-0.5.5-1.noarch.rpm), is experimental. It has not been verified on a running RHEL system and is unsigned.
 
 ```sh
-curl -fL -o updates-monitor-0.5.5-1.noarch.rpm https://raw.githubusercontent.com/g1n10l/updates-monitor/main/installers/updates-monitor-0.5.5-1.noarch.rpm
+curl -fL -o updates-monitor-0.5.5-1.noarch.rpm https://raw.githubusercontent.com/g1n10l/updates-monitor/main/install/updates-monitor-0.5.5-1.noarch.rpm
 echo 'd95c8465575bb1d34223d7a6ed1104c030706fe7a17b0485a46e741563e7f544  updates-monitor-0.5.5-1.noarch.rpm' | sha256sum -c -
 sudo dnf install updates-monitor-0.5.5-1.noarch.rpm
 ```
@@ -95,3 +95,39 @@ On Debian and Ubuntu, the script identifies security archives by the `-security`
 For the RPM version, security classification depends on DNF repository `updateinfo` metadata. Each check counts package candidates; the cumulative totals count repeated observations of the same packages and do not represent vulnerabilities.
 
 Created by **G1n10L**.
+
+
+## Source code and builds
+
+The complete source code, package definitions and tests are in
+[`updates-monitor/`](updates-monitor/). Ready-built packages remain in
+[`install/`](install/), and the published Zabbix template is in
+[`template/`](template/).
+
+```text
+updates-monitor/
+├── updates-monitor/    # Source code, documentation, packaging and tests
+├── install/            # DEB and RPM packages
+└── template/           # Published Zabbix template
+```
+
+From the repository root, build packages with:
+
+```sh
+python3 updates-monitor/build-deb.py
+python3 updates-monitor/build-installer.py
+bash updates-monitor/redhat/build-rpm.sh
+```
+
+The RPM build requires the tools described in the
+[RPM build notes](updates-monitor/redhat/README.txt). Generated files go to
+`install/`. The [source manual](updates-monitor/README.md) and
+[Polish instructions](updates-monitor/README.txt) describe operation and packaging.
+
+Run the isolated checks with:
+
+```sh
+for test in updates-monitor/tests/test_*.py; do
+    python3 "$test" || exit 1
+done
+```
