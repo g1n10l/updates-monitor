@@ -80,23 +80,30 @@ To remove it, run `sudo dnf remove updates-monitor`. Configuration and schedule 
 ## Usage
 
 ```sh
-sudo updates-monitor status
-sudo updates-monitor interval 6h
-sudo updates-monitor interval 1D
-sudo updates-monitor interval 30D
-man updates-monitor
+sudo updates-monitor status        # Run a check and display the results
+sudo updates-monitor interval 0    # Disable automatic checks
+sudo updates-monitor interval 2h   # Check every 2 hours
+sudo updates-monitor interval 6h   # Check every 6 hours
+sudo updates-monitor interval 12h  # Check every 12 hours
+sudo updates-monitor interval 1D   # Check every day
+sudo updates-monitor interval 5D   # Check every 5 days
+sudo updates-monitor interval 10D  # Check every 10 days
+sudo updates-monitor interval 15D  # Check every 15 days
+sudo updates-monitor interval 30D  # Check every 30 days
+man updates-monitor                # Show the manual
 ```
 
-Check the installed package version with `dpkg-query -W updates-monitor` on Debian/Ubuntu or `rpm -q updates-monitor` on RHEL-compatible systems.
+Setting any nonzero interval enables automatic checks. `interval 0` disables them, but a manual `status` command still runs a check. A disabled schedule is reported in Zabbix. Package changes on Debian and Ubuntu can also trigger a check when automatic checks are enabled.
 
-Use `sudo updates-monitor interval 0` to disable automatic update scans. Setting an interval, for example `sudo updates-monitor interval 6h`, re-enables them. Manual `sudo updates-monitor status` still runs a scan; the disabled schedule is also reported in Zabbix.
+`status` displays cumulative scan counts, the last successful check, restart status, the interval, and service status. The service performs one check and may show as `inactive` after it finishes. If a check fails, `status` also shows recent errors from `journalctl`.
 
-`status` runs a check even when the schedule is disabled. It shows cumulative scan counts, the time of the last successful check, the interval, and service status. If the service failed to start, it also shows recent errors from `journalctl`.
-
-The service performs one check and may show as `inactive` when it finishes. Cron runs the schedule. Read the service log with:
+Check the installed version and view service details with:
 
 ```sh
-journalctl -u updates-monitor.service -n 50 --no-pager
+dpkg-query -W updates-monitor                         # Debian and Ubuntu
+rpm -q updates-monitor                                # RHEL-compatible systems
+systemctl status updates-monitor.service --no-pager   # Check service state
+journalctl -u updates-monitor.service -n 50 --no-pager # Read recent service logs
 ```
 
 ## Zabbix and files
