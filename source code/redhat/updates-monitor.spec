@@ -1,5 +1,5 @@
 Name:           updates-monitor
-Version:        0.5.8
+Version:        0.5.10
 Release:        1%{?dist}
 Summary:        Monitor DNF updates for Zabbix
 License:        Proprietary

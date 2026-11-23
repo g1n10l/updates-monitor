@@ -7,8 +7,8 @@ Monitor Linux package updates with Zabbix. The tool reports cumulative scan coun
 
 ## Platforms and packages
 
-- **Debian and Ubuntu:** APT, systemd and cron. Install the [DEB package](../install/updates-monitor_0.5.8-1_all.deb). The optional RUN installer can be built with [build-installer.py](build-installer.py).
-- **RHEL 8/9 and compatible systems:** an [RPM package](../install/updates-monitor-0.5.8-1.noarch.rpm) using DNF 4 and crond is provided as an experimental build. Its classification has been tested with simulated data, but installation and operation on a live RHEL system have not yet been verified. The RPM is unsigned. See the [Red Hat build notes](redhat/README.txt).
+- **Debian and Ubuntu:** APT, systemd and cron. Install the [DEB package](../install/updates-monitor_0.5.10-1_all.deb). The optional RUN installer can be built with [build-installer.py](build-installer.py).
+- **RHEL 8/9 and compatible systems:** an [RPM package](../install/updates-monitor-0.5.10-1.noarch.rpm) using DNF 4 and crond is provided as an experimental build. Its classification has been tested with simulated data, but installation and operation on a live RHEL system have not yet been verified. The RPM is unsigned. See the [Red Hat build notes](redhat/README.txt).
 
 The installers do not install a Zabbix agent or add a Zabbix repository. They configure an existing Zabbix agent or agent 2; set `Server` and, if applicable, `ServerActive` in the agent configuration separately. The RUN installer does not currently include an uninstaller.
 
@@ -19,8 +19,8 @@ The installers do not install a Zabbix agent or add a Zabbix repository. They co
 On Debian, Ubuntu and compatible systems, install the downloaded DEB package:
 
 ```sh
-curl -fL -o updates-monitor.deb https://raw.githubusercontent.com/g1n10l/updates-monitor/main/install/updates-monitor_0.5.8-1_all.deb
-echo '671b770cee64739a72c5db55409382e2e85fd0bb103e01e55482bfdda5d81237  updates-monitor.deb' | sha256sum -c -
+curl -fL -o updates-monitor.deb https://raw.githubusercontent.com/g1n10l/updates-monitor/main/install/updates-monitor_0.5.10-1_all.deb
+echo 'db60865f644046f3ffb4ead9598ff4feb40ef166090e90c1580fc3e03fbe9b29  updates-monitor.deb' | sha256sum -c -
 sudo dpkg -i updates-monitor.deb
 ```
 
@@ -39,7 +39,7 @@ After building the optional RUN installer, install using `sudo bash ../install/u
 On RHEL 8/9 and compatible systems, install the experimental RPM package:
 
 ```sh
-sudo dnf install updates-monitor-0.5.8-1.noarch.rpm
+sudo dnf install updates-monitor-0.5.10-1.noarch.rpm
 ```
 
 To uninstall it:
@@ -92,7 +92,7 @@ The manual is available after installation with `man updates-monitor`. More deta
 
 ## Restart required after updates
 
-The scheduler reports reboot status in `updates.monitor.reboot_required` through the existing health item. Zabbix raises a warning containing the host name when a restart is required and a valid scan shows zero regular, security and kernel updates. It closes the warning when reboot is no longer required or a valid scan finds pending updates; unknown data do not confirm recovery. The status is refreshed on each scheduler tick, normally once per minute, independently of the update scan interval. The agent and Zabbix polling add delay.
+The scheduler reports reboot status in `updates.monitor.reboot_required` through the existing health item. Zabbix raises a warning containing the host name when a restart is required and a valid scan shows zero regular, security and kernel updates. It closes the warning only after both reboot sources confirm no restart is needed and a valid scan exists; unknown data do not confirm recovery. The status is refreshed on each scheduler tick, normally once per minute, independently of the update scan interval. The agent and Zabbix polling add delay.
 
 On Debian and Ubuntu the check uses `/run/reboot-required`, which only reflects packages that create the marker. On RHEL-compatible systems it runs `dnf needs-restarting -r` from `dnf-plugins-core` as the scheduler user. A missing tool, unrecognized result, failed check or old agent reports status 2 (unknown), not a clear result. Monitoring covers host reboots; individual services may also require a restart. The alert does not restart a host.
 
@@ -100,6 +100,6 @@ Update the installed monitor on each host and import the updated template. A tem
 
 ## New kernel restart recommendation
 
-The Zabbix item `updates.monitor.kernel_update_pending` compares the running kernel version with kernel images of the same flavour or architecture in `/boot`. A newer image yields 1; no newer image yields 0; an unsupported version format, missing images or comparison error yields 2 (unknown). The warning names the host when the value is 1 and a valid update scan shows all three update categories at zero. It resolves after the running kernel is no older than the matching images or when a valid scan finds pending updates. An unknown result alone does not close it.
+The Zabbix item `updates.monitor.kernel_update_pending` compares the running kernel version with kernel images of the same flavour or architecture in `/boot`. A newer image yields 1; no newer image yields 0; an unsupported version format, missing images or comparison error yields 2 (unknown). The combined warning names the host when either this value or the system reboot indicator is 1, a valid scan after the latest package database change shows all three categories at zero, and the check service is idle. Both restart sources must report 0 before the warning closes; unknown data do not close it.
 
-This is a recommendation based on files in `/boot`, not proof that the bootloader is configured to load the newer image. Retained or manually installed images can influence the result. It is independent of the system reboot-required marker and may appear alongside the general reboot warning. A separate boot partition must be mounted for the check. The scheduler refreshes the result on each tick, normally once per minute.
+This is a recommendation based on files in `/boot`, not proof that the bootloader is configured to load the newer image. Retained or manually installed images can influence the result. It is independent of the system reboot-required marker; both sources feed one warning. A separate boot partition must be mounted for the check. The scheduler refreshes the result on each tick, normally once per minute.

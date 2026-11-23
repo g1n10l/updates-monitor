@@ -11,40 +11,70 @@ if [[ $# == 1 && $1 == status ]]; then
         result=1
         service_failed=1
     fi
-    if ! /usr/bin/python3 - <<'PY'
-import datetime
-import json
-import sys
-try:
-    with open('/run/updates-monitor/state.json', encoding='utf-8') as f:
-        data = json.load(f)
-    for key, label in [('regular', 'Suma kontroli: aktualizacje regularne'),
-                       ('security', 'Suma kontroli: aktualizacje bezpieczeństwa'),
-                       ('kernel_security', 'Suma kontroli: aktualizacje kernela')]:
-        print(f'{label}: {data[key]}')
-    timestamp = int(data.get('checked_at', 0))
-    print('Ostatnia udana kontrola:', datetime.datetime.fromtimestamp(timestamp).astimezone().strftime('%Y-%m-%d %H:%M:%S %Z') if timestamp else 'brak')
-    if data.get('valid') != 1:
-        print('Wynik nie jest aktualny: ostatnia kontrola się nie powiodła.', file=sys.stderr)
-        sys.exit(1)
-except (OSError, ValueError, KeyError, TypeError) as exc:
-    print('Nie można odczytać wyniku:', exc, file=sys.stderr)
-    sys.exit(1)
-PY
-    then
-        result=1
-    fi
+    # Sprawdź oba źródła bez oczekiwania na kolejny przebieg cron.
+    reboot_data=$($scheduler reboot-status) || reboot_data='{}'
     service_state=$(systemctl is-active updates-monitor.service || true)
     cron_state=$(systemctl is-active cron.service || true)
     cron_enabled=$(systemctl is-enabled cron.service 2>/dev/null || true)
-    if schedule=$("$scheduler" show); then
-        /usr/bin/python3 -c 'import json,sys; d=json.load(sys.stdin); print("Harmonogram: " + ("włączony" if d["enabled"] else "wyłączony")); print("Interwał kontroli: " + d["interval"])' <<< "$schedule"
-    else
-        echo 'Nie można odczytać konfiguracji harmonogramu.' >&2
+    schedule=$($scheduler show) || { schedule='{}'; result=1; }
+    terminal_color=0
+    [[ -t 1 && ${TERM:-dumb} != dumb && -z ${NO_COLOR:-} ]] && terminal_color=1
+    if ! /usr/bin/python3 - "$reboot_data" "$schedule" "$service_state" "$cron_state" "$cron_enabled" "$terminal_color" <<'PYCODE'
+import datetime
+import json
+import socket
+import sys
+
+def read_json(value):
+    try:
+        data = json.loads(value)
+        return data if isinstance(data, dict) else {}
+    except (ValueError, TypeError):
+        return {}
+
+reboot, schedule = map(read_json, sys.argv[1:3])
+service, cron, cron_enabled, color = sys.argv[3:7]
+try:
+    with open('/run/updates-monitor/state.json', encoding='utf-8') as f:
+        data = json.load(f)
+    counts = [data[k] for k in ('regular', 'security', 'kernel_security')]
+    if any(type(n) is not int or n < 0 for n in counts):
+        raise ValueError('nieprawidłowe liczniki')
+    ts = int(data.get('checked_at', 0))
+    checked = datetime.datetime.fromtimestamp(ts).astimezone().strftime('%d.%m.%Y %H:%M %Z') if ts else 'brak'
+    valid = data.get('valid') == 1
+except (OSError, ValueError, KeyError, TypeError, OverflowError) as exc:
+    print('Nie można odczytać wyniku:', exc, file=sys.stderr)
+    sys.exit(1)
+print('\nUPDATES MONITOR  ' + socket.gethostname())
+print('-----------------------------------------------')
+print('Ostatnia kontrola: ' + checked)
+print('Wynik kontroli:    ' + ('poprawny' if valid else 'nieaktualny'))
+print('\nAKTUALIZACJE - SUMY KONTROLI')
+for label, count in zip(('Regularne', 'Bezpieczeństwa', 'Kernel'), counts):
+    print('  {:20} {}'.format(label + ':', count))
+values = [reboot.get('reboot_required'), reboot.get('kernel_update_pending')]
+print('\nRESTART')
+if 1 in values:
+    message = 'wymagany restart systemu'
+    if color == '1':
+        message = '\033[5;31m' + message + '\033[0m'
+    print('  ' + message)
+elif values == [0, 0]:
+    print('  Restart niewymagany')
+else:
+    print('  Stan nieznany')
+print('\nHARMONOGRAM')
+print('  Stan:       ' + ('włączony' if schedule.get('enabled') is True else 'wyłączony' if schedule.get('enabled') is False else 'nieznany'))
+print('  Interwał:   ' + str(schedule.get('interval', 'nieznany')))
+print('  Cron:       ' + cron + ' (autostart: ' + cron_enabled + ')')
+print('  Usługa:     ' + service)
+if not valid:
+    sys.exit(1)
+PYCODE
+    then
         result=1
     fi
-    echo "Stan usługi: $service_state (usługa kończy pracę po sprawdzeniu)"
-    echo "Stan cron: $cron_state; autostart: $cron_enabled"
     if [[ $service_failed == 1 ]]; then
         echo
         echo 'Ostatnie błędy usługi (do 10 wpisów z journalctl, także z poprzednich uruchomień):'

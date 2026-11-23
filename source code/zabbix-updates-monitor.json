@@ -15,7 +15,7 @@
         "description": "Monitorowanie aktualizacji systemu przez updates-monitor i agenta Zabbix. Autor: G1n10L. Liczniki sumują wyniki kolejnych kontroli i zerują się, gdy w kategorii nie ma aktualizacji. Trzecia kategoria obejmuje wszystkie aktualizacje kernela.",
         "vendor": {
           "name": "G1n10L",
-          "version": "0.5.8"
+          "version": "0.5.10"
         },
         "groups": [
           {
@@ -330,6 +330,53 @@
             "valuemap": {
               "name": "Stan restartu po aktualizacji kernela"
             }
+          },
+          {
+            "uuid": "25fa620e583045afab464a07b204ce01",
+            "name": "System: wymagany restart hosta",
+            "type": "DEPENDENT",
+            "key": "updates.monitor.restart_needed",
+            "delay": "0",
+            "history": "30d",
+            "trends": "365d",
+            "value_type": "UNSIGNED",
+            "description": "1: co najmniej jedno źródło zaleca restart; 0: oba potwierdzają brak potrzeby; 2: brak jednoznacznego wyniku.",
+            "preprocessing": [
+              {
+                "type": "JAVASCRIPT",
+                "parameters": [
+                  "var d=JSON.parse(value); if(d.valid!==1)return 2; var a=d.reboot_required,b=d.kernel_update_pending; if(a===1 || b===1)return 1; if(a===0 && b===0)return 0; return 2;"
+                ]
+              }
+            ],
+            "master_item": {
+              "key": "updates.monitor.health"
+            },
+            "valuemap": {
+              "name": "Stan restartu systemu"
+            }
+          },
+          {
+            "uuid": "99bc759599324ab4a55be73ad61ee29a",
+            "name": "Aktualizacje: kontrola po ostatniej zmianie pakietów",
+            "type": "DEPENDENT",
+            "key": "updates.monitor.package_scan_current",
+            "delay": "0",
+            "history": "30d",
+            "trends": "365d",
+            "value_type": "UNSIGNED",
+            "description": "1: poprawna kontrola jest nowsza od bazy pakietów i blokady APT są wolne; 0: nie potwierdzono.",
+            "preprocessing": [
+              {
+                "type": "JAVASCRIPT",
+                "parameters": [
+                  "var d=JSON.parse(value); return d.valid===1 && d.package_scan_current===1 ? 1 : 0;"
+                ]
+              }
+            ],
+            "master_item": {
+              "key": "updates.monitor.health"
+            }
           }
         ],
         "valuemaps": [
@@ -486,13 +533,13 @@
       },
       {
         "uuid": "a7e8fc49f0a54b89a2e8d4a77b5e1076",
-        "name": "Wymagany restart systemu po aktualizacji",
-        "event_name": "Host {HOST.NAME} wymaga restartu po aktualizacji",
-        "expression": "last(/updates-monitor/updates.monitor.reboot_required)=1 and last(/updates-monitor/updates.monitor.valid)=1 and last(/updates-monitor/updates.monitor.regular)=0 and last(/updates-monitor/updates.monitor.security)=0 and last(/updates-monitor/updates.monitor.kernel_security)=0",
+        "name": "Wymagany restart hosta",
+        "event_name": "Host {HOST.NAME}: wymagany restart hosta",
+        "expression": "last(/updates-monitor/updates.monitor.restart_needed)=1 and last(/updates-monitor/updates.monitor.valid)=1 and last(/updates-monitor/updates.monitor.regular)=0 and last(/updates-monitor/updates.monitor.security)=0 and last(/updates-monitor/updates.monitor.kernel_security)=0 and last(/updates-monitor/updates.monitor.package_scan_current)=1 and last(/updates-monitor/updates.monitor.health.service_state)=0 and last(/updates-monitor/updates.monitor.health.updated_at)>0 and now()-last(/updates-monitor/updates.monitor.health.updated_at)<=180",
         "recovery_mode": "RECOVERY_EXPRESSION",
-        "recovery_expression": "last(/updates-monitor/updates.monitor.reboot_required)=0 or (last(/updates-monitor/updates.monitor.valid)=1 and (last(/updates-monitor/updates.monitor.regular)>0 or last(/updates-monitor/updates.monitor.security)>0 or last(/updates-monitor/updates.monitor.kernel_security)>0))",
+        "recovery_expression": "last(/updates-monitor/updates.monitor.restart_needed)=0 and last(/updates-monitor/updates.monitor.valid)=1",
         "priority": "WARNING",
-        "description": "Alarm pojawia się, gdy restart jest wymagany i wszystkie trzy liczniki aktualizacji wynoszą zero przy poprawnym wyniku kontroli. Nieznany stan restartu ani niepoprawny wynik kontroli nie potwierdzają zamknięcia problemu."
+        "description": "Jeden alarm dla znacznika restartu i nowszego kernela. Pojawia się po poprawnej kontroli z zerowymi licznikami. Zamyka się po potwierdzeniu przez oba źródła, że restart nie jest wymagany. Nieznany stan nie zamyka alarmu. Wymaga kontroli nowszej od ostatniej zmiany bazy pakietów; przy braku potwierdzenia alarm nie powstaje."
       },
       {
         "uuid": "b778e8b8168c484ea8f5fe9ec76b3881",
@@ -510,7 +557,8 @@
         "recovery_mode": "RECOVERY_EXPRESSION",
         "recovery_expression": "last(/updates-monitor/updates.monitor.kernel_update_pending)=0 or (last(/updates-monitor/updates.monitor.valid)=1 and (last(/updates-monitor/updates.monitor.regular)>0 or last(/updates-monitor/updates.monitor.security)>0 or last(/updates-monitor/updates.monitor.kernel_security)>0))",
         "priority": "WARNING",
-        "description": "W /boot wykryto nowszy obraz kernela tej samej rodziny niż uruchomiony. Zweryfikuj ustawienia bootloadera i zaplanuj restart. Brak danych nie potwierdza wczytania nowego kernela."
+        "description": "Wyłączony starszy alarm. Zastępuje go wspólny alarm Wymagany restart hosta.",
+        "status": "DISABLED"
       }
     ]
   }

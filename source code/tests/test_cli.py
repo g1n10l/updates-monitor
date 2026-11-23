@@ -23,7 +23,8 @@ case "$1" in
  is-active) if [[ "$2" == cron.service ]]; then echo active; else echo inactive; fi;;
 esac''',
         'scheduler': '''printf "scheduler %s\\n" "$*" >> "$TEST_LOG"
-[[ "$1" == show ]] && printf '%s\\n' '{"enabled":true,"interval":"6h","cron_active":true}'
+if [[ "$1" == show ]]; then printf '%s\\n' '{"enabled":true,"interval":"6h","cron_active":true}'; fi
+if [[ "$1" == reboot-status ]]; then printf '%s\\n' "${TEST_REBOOT:-}"; fi
 exit 0''',
         'journalctl': '''printf 'journalctl\\n' >> "$TEST_LOG"
 echo 'Przykładowy błąd usługi' ''',
@@ -32,17 +33,24 @@ echo 'Przykładowy błąd usługi' ''',
         p = d / name
         p.write_text('#!/bin/bash\n' + body + '\n')
         p.chmod(0o755)
-    env = dict(os.environ, PATH=tmp + ':' + os.environ['PATH'], TEST_LOG=str(d / 'log'))
+    env = dict(os.environ, PATH=tmp + ':' + os.environ['PATH'], TEST_LOG=str(d / 'log'), TEST_REBOOT=json.dumps({'reboot_required': 0, 'kernel_update_pending': 0}))
     for action in ('status',):
         (d / 'log').write_text('')
         result = subprocess.run(['bash', str(d / 'cli'), action], env=env, text=True, capture_output=True)
         lines = (d / 'log').read_text().splitlines()
         assert result.returncode == 0, (action, result.stdout, result.stderr)
         if action == 'status':
-            assert 'Interwał kontroli: 6h' in result.stdout and 'Stan cron: active' in result.stdout
-            assert 'Suma kontroli: aktualizacje regularne: 2' in result.stdout
+            assert 'Interwał:   6h' in result.stdout and 'Cron:       active' in result.stdout
+            assert 'Regularne:' in result.stdout and 'Restart niewymagany' in result.stdout
             assert 'journalctl' not in lines
             assert not any(line.startswith('scheduler enable') for line in lines)
+    for reboot, kernel, expected in [(1, 0, 'wymagany restart systemu'),
+                                     (0, 1, 'wymagany restart systemu'),
+                                     (0, 2, 'Stan nieznany')]:
+        env['TEST_REBOOT'] = json.dumps({'reboot_required': reboot, 'kernel_update_pending': kernel})
+        result = subprocess.run(['bash', str(d / 'cli'), 'status'], env=env, text=True, capture_output=True)
+        assert result.returncode == 0 and expected in result.stdout, (result.stdout, result.stderr)
+    env['TEST_REBOOT'] = json.dumps({'reboot_required': 0, 'kernel_update_pending': 0})
     (d / 'log').write_text('')
     for removed_action in ('start', 'stop'):
         result = subprocess.run(['bash', str(d / 'cli'), removed_action], env=env, text=True, capture_output=True)

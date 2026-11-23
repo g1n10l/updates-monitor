@@ -52,12 +52,36 @@ with tempfile.TemporaryDirectory() as tmp:
         assert scheduler.kernel_update_pending() == 0
         (scheduler.BOOT_DIR / 'vmlinuz-6.8.0-41-generic').touch()
         assert scheduler.kernel_update_pending() == 1
+    trixie_running = lambda: SimpleNamespace(release='6.12.118+deb13-amd64')
+    (scheduler.BOOT_DIR / 'vmlinuz-6.12.118+deb13-amd64').touch()
+    with patch.object(scheduler.os, 'uname', trixie_running), patch.object(scheduler.subprocess, 'run', side_effect=version_sort):
+        assert scheduler.kernel_update_pending() == 0
+        (scheduler.BOOT_DIR / 'vmlinuz-6.12.119+deb13-amd64').touch()
+        assert scheduler.kernel_update_pending() == 1
     rpm_running = lambda: SimpleNamespace(release='5.14.0-427.13.1.el9_4.x86_64')
     (scheduler.BOOT_DIR / 'vmlinuz-5.14.0-427.22.1.el9_4.x86_64').touch()
     with patch.object(scheduler.os, 'uname', rpm_running), patch.object(scheduler.subprocess, 'run', side_effect=version_sort):
         assert scheduler.kernel_update_pending() == 1
     with patch.object(scheduler.os, 'uname', lambda: SimpleNamespace(release='unsupported')):
         assert scheduler.kernel_update_pending() == 2
+
+with tempfile.TemporaryDirectory() as tmp:
+    import os
+    base = Path(tmp)
+    scheduler.STATE = base / 'state.json'
+    scheduler.DPKG_STATUS = base / 'dpkg-status'
+    scheduler.DPKG_LOCKS = (base / 'lock',)
+    scheduler.RPM_DATABASES = ()
+    scheduler.DPKG_STATUS.touch()
+    os.utime(scheduler.DPKG_STATUS, (1000, 1000))
+    scheduler.STATE.write_text(json.dumps({'valid': 1, 'checked_at': 999}))
+    assert scheduler.package_scan_current() == 0
+    scheduler.STATE.write_text(json.dumps({'valid': 1, 'checked_at': 1000}))
+    assert scheduler.package_scan_current() == 0
+    scheduler.STATE.write_text(json.dumps({'valid': 1, 'checked_at': 1001}))
+    assert scheduler.package_scan_current() == 1
+    scheduler.STATE.write_text(json.dumps({'valid': 0, 'checked_at': 1001}))
+    assert scheduler.package_scan_current() == 0
 
 data = json.loads((root / 'zabbix-updates-monitor.json').read_text())['zabbix_export']
 items = {i['key']: i for i in data['templates'][0]['items']}
@@ -72,23 +96,26 @@ for value, expected in [({'valid': 1, 'reboot_required': 0}, '0'),
                         ({'valid': 1}, '2')]:
     actual = subprocess.check_output(['node', '-e', harness, js, json.dumps(value)], text=True).strip()
     assert actual == expected, (value, actual)
-trigger = next(t for t in data['triggers'] if t['name'] == 'Wymagany restart systemu po aktualizacji')
+combined = items['updates.monitor.restart_needed']
+js = combined['preprocessing'][0]['parameters'][0]
+for a, b, expected in [(0, 0, '0'), (1, 0, '1'), (0, 1, '1'), (1, 2, '1'), (0, 2, '2'), (2, 2, '2')]:
+    value = {'valid': 1, 'reboot_required': a, 'kernel_update_pending': b}
+    actual = subprocess.check_output(['node', '-e', harness, js, json.dumps(value)], text=True).strip()
+    assert actual == expected, (value, actual)
+assert subprocess.check_output(['node', '-e', harness, js, json.dumps({'valid': 0, 'reboot_required': 1})], text=True).strip() == '2'
+trigger = next(t for t in data['triggers'] if t['name'] == 'Wymagany restart hosta')
 assert '{HOST.NAME}' in trigger['event_name']
-assert 'updates.monitor.reboot_required)=1' in trigger['expression']
+assert 'updates.monitor.restart_needed)=1' in trigger['expression']
 assert 'updates.monitor.valid)=1' in trigger['expression']
 for category in ('regular', 'security', 'kernel_security'):
     assert 'updates.monitor.' + category + ')=0' in trigger['expression']
-    assert 'updates.monitor.' + category + ')>0' in trigger['recovery_expression']
-assert 'updates.monitor.reboot_required)=0' in trigger['recovery_expression']
+assert 'updates.monitor.restart_needed)=0' in trigger['recovery_expression']
+assert 'updates.monitor.package_scan_current)=1' in trigger['expression']
+assert 'updates.monitor.health.service_state)=0' in trigger['expression']
 assert (root / 'zabbix-updates-monitor.json').read_bytes() == (root.parent / 'template/updates-monitor.json').read_bytes()
 print('OK: reboot marker, DNF, błędy oraz szablon Zabbiksa')
 
 kernel_item = items['updates.monitor.kernel_update_pending']
 assert kernel_item['master_item']['key'] == 'updates.monitor.health'
-kernel_trigger = next(t for t in data['triggers'] if t['name'] == 'Zaktualizowany kernel (zalecany restart)')
-assert '{HOST.NAME}' in kernel_trigger['event_name']
-for category in ('regular', 'security', 'kernel_security'):
-    assert 'updates.monitor.' + category + ')=0' in kernel_trigger['expression']
-assert 'updates.monitor.valid)=1' in kernel_trigger['expression']
-assert 'updates.monitor.kernel_update_pending)=1' in kernel_trigger['expression']
-assert 'updates.monitor.kernel_update_pending)=0' in kernel_trigger['recovery_expression']
+kernel_trigger = next(t for t in data['triggers'] if t['uuid'] == 'b88e5c0862bc4deea324c25cdfef7000')
+assert kernel_trigger['status'] == 'DISABLED'

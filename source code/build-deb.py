@@ -7,7 +7,7 @@ from pathlib import Path
 import tarfile
 
 ROOT = Path(__file__).resolve().parent
-PACKAGE = 'updates-monitor_0.5.8-1_all.deb'
+PACKAGE = 'updates-monitor_0.5.10-1_all.deb'
 
 
 def compressed(data):

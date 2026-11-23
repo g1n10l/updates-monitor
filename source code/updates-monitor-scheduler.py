@@ -13,6 +13,8 @@ import time
 CONFIG = Path('/etc/updates-monitor/schedule.json')
 RUNTIME = Path('/run/updates-monitor')
 HEALTH = RUNTIME / 'health.json'
+STATE = RUNTIME / 'state.json'
+RPM_DATABASES = (Path('/usr/lib/sysimage/rpm/rpmdb.sqlite'), Path('/var/lib/rpm/rpmdb.sqlite'))
 LAST = RUNTIME / 'last-attempt'
 LEGACY = Path('/var/lib/updates-monitor/legacy-schedule.json')
 CRON_FILE = Path('/etc/cron.d/updates-monitor')
@@ -120,10 +122,10 @@ def kernel_update_pending():
     """
     try:
         running = os.uname().release
-        match = re.fullmatch(r'\d+(?:\.\d+)+-\d+(-[a-zA-Z][a-zA-Z0-9_-]*)', running)
+        match = re.fullmatch(r'\d+(?:\.\d+)+(?:[+~.][0-9a-zA-Z.]+)?(?:-\d+)?(-[a-zA-Z][a-zA-Z0-9_-]*)', running)
         if match:
             suffix = match.group(1)
-            family = lambda version: bool(re.fullmatch(r'\d+(?:\.\d+)+-\d+' + re.escape(suffix), version))
+            family = lambda version: bool(re.fullmatch(r'\d+(?:\.\d+)+(?:[+~.][0-9a-zA-Z.]+)?(?:-\d+)?' + re.escape(suffix), version))
         else:
             match = re.fullmatch(r'\d+(?:\.\d+)+-\d+[a-zA-Z0-9_.+-]*\.(x86_64|aarch64|ppc64le|s390x)', running)
             if not match:
@@ -147,6 +149,44 @@ def kernel_update_pending():
         return 2
 
 
+def package_scan_current():
+    """A zero result is usable only after a scan newer than the package database."""
+    locks = []
+    try:
+        state = json.loads(STATE.read_text(encoding='utf-8'))
+        checked = state.get('checked_at')
+        if state.get('valid') != 1 or type(checked) is not int or checked <= 0:
+            return 0
+        if DPKG_STATUS.is_file():
+            for path in DPKG_LOCKS:
+                try:
+                    lock = path.open('r+')
+                except FileNotFoundError:
+                    continue
+                locks.append(lock)
+                try:
+                    fcntl.lockf(lock, fcntl.LOCK_EX | fcntl.LOCK_NB)
+                except BlockingIOError:
+                    return 0
+            database = DPKG_STATUS
+        else:
+            database = next((path for path in RPM_DATABASES if path.is_file()), None)
+            if database is None:
+                return 0
+        changed = database.stat().st_mtime
+        if database != DPKG_STATUS:
+            wal = Path(str(database) + '-wal')
+            if wal.exists():
+                changed = max(changed, wal.stat().st_mtime)
+        # checked_at has one-second resolution. Equality is ambiguous.
+        return int(checked > changed)
+    except (OSError, ValueError, TypeError):
+        return 0
+    finally:
+        for lock in locks:
+            lock.close()
+
+
 def health(data):
     cron = command('is-active', '--quiet', 'cron.service', check=False).returncode == 0
     unit = command('show', 'updates-monitor.service', '--property=ActiveState', '--value').stdout.strip()
@@ -159,7 +199,8 @@ def health(data):
     return {'valid': 1, 'scheduler_active': int(data['enabled'] and cron and cron_configured),
             'service_state': states[unit], 'service_failed': int(unit == 'failed'),
             'interval_seconds': INTERVALS[data['interval']], 'updated_at': int(time.time()),
-            'reboot_required': reboot_required(), 'kernel_update_pending': kernel_update_pending()}
+            'reboot_required': reboot_required(), 'kernel_update_pending': kernel_update_pending(),
+            'package_scan_current': package_scan_current()}
 
 
 def dpkg_snapshot():
@@ -222,13 +263,16 @@ def tick():
             print('Błąd harmonogramu:', exc, file=sys.stderr)
             atomic(HEALTH, json.dumps({'valid': 0, 'scheduler_active': 0, 'service_state': 0,
                                       'service_failed': 0, 'interval_seconds': 0,
-                                      'updated_at': int(time.time()), 'reboot_required': 2, 'kernel_update_pending': 2}, separators=(',', ':')))
+                                      'updated_at': int(time.time()), 'reboot_required': 2, 'kernel_update_pending': 2, 'package_scan_current': 0}, separators=(',', ':')))
             raise SystemExit(1)
 
 
 def main():
     args = sys.argv[1:]
-    if args == ['tick']:
+    if args == ['reboot-status']:
+        print(json.dumps({'reboot_required': reboot_required(), 'kernel_update_pending': kernel_update_pending(),
+            'package_scan_current': package_scan_current()}))
+    elif args == ['tick']:
         tick()
     elif args == ['init']:
         init()

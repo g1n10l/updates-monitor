@@ -14,13 +14,13 @@ The results are split into three categories:
 
 **Restart notification:** Zabbix shows a warning naming the host when it requires a restart and a successful update check reports `0` regular, security, and kernel updates. See [Restart required after updates](#restart-required-after-updates) for the detection and recovery rules.
 
-**Kernel update notification:** When a newer kernel image is installed and a successful update check reports zero updates in all three categories, Zabbix shows `Zaktualizowany kernel (zalecany restart)` with the host name. See [New kernel restart recommendation](#new-kernel-restart-recommendation).
+**Kernel update notification:** A newer kernel image also triggers the single `Wymagany restart hosta` warning once a valid check confirms zero pending updates. See [New kernel restart recommendation](#new-kernel-restart-recommendation).
 
 Zabbix also receives the time of the last check, the schedule status, and the service status. The public [Zabbix template](template/updates-monitor.json) is included in the installation package at `/usr/share/updates-monitor/zabbix-updates-monitor.json`. The installer configures an existing Zabbix agent or agent 2 to read the results. Install and configure the agent separately.
 
 ## Restart required after updates
 
-The scheduler reports reboot status in `updates.monitor.reboot_required` through the existing health item. Zabbix raises a warning containing the host name when a restart is required and a valid scan shows zero regular, security and kernel updates. It closes the warning when reboot is no longer required or a valid scan finds pending updates; unknown data do not confirm recovery. The status is refreshed on each scheduler tick, normally once per minute, independently of the update scan interval. The agent and Zabbix polling add delay.
+The scheduler reports reboot status in `updates.monitor.reboot_required` through the existing health item. Zabbix raises a warning containing the host name when a restart is required and a valid scan shows zero regular, security and kernel updates. It closes the warning only after both reboot sources confirm no restart is needed and a valid scan exists; unknown data do not confirm recovery. The status is refreshed on each scheduler tick, normally once per minute, independently of the update scan interval. The agent and Zabbix polling add delay.
 
 On Debian and Ubuntu the check uses `/run/reboot-required`, which only reflects packages that create the marker. On RHEL-compatible systems it runs `dnf needs-restarting -r` from `dnf-plugins-core` as the scheduler user. A missing tool, unrecognized result, failed check or old agent reports status 2 (unknown), not a clear result. Monitoring covers host reboots; individual services may also require a restart. The alert does not restart a host.
 
@@ -28,9 +28,9 @@ Update the installed monitor on each host and import the updated template. A tem
 
 ## New kernel restart recommendation
 
-The Zabbix item `updates.monitor.kernel_update_pending` compares the running kernel version with kernel images of the same flavour or architecture in `/boot`. A newer image yields 1; no newer image yields 0; an unsupported version format, missing images or comparison error yields 2 (unknown). The warning names the host when the value is 1 and a valid update scan shows all three update categories at zero. It resolves after the running kernel is no older than the matching images or when a valid scan finds pending updates. An unknown result alone does not close it.
+The Zabbix item `updates.monitor.kernel_update_pending` compares the running kernel version with kernel images of the same flavour or architecture in `/boot`. A newer image yields 1; no newer image yields 0; an unsupported version format, missing images or comparison error yields 2 (unknown). The combined warning names the host when either this value or the system reboot indicator is 1, a valid scan after the latest package database change shows all three categories at zero, and the check service is idle. Both restart sources must report 0 before the warning closes; unknown data do not close it.
 
-This is a recommendation based on files in `/boot`, not proof that the bootloader is configured to load the newer image. Retained or manually installed images can influence the result. It is independent of the system reboot-required marker and may appear alongside the general reboot warning. A separate boot partition must be mounted for the check. The scheduler refreshes the result on each tick, normally once per minute.
+This is a recommendation based on files in `/boot`, not proof that the bootloader is configured to load the newer image. Retained or manually installed images can influence the result. It is independent of the system reboot-required marker; both sources feed one warning. A separate boot partition must be mounted for the check. The scheduler refreshes the result on each tick, normally once per minute.
 
 ## When checks run
 
@@ -47,11 +47,11 @@ Checks use package repository metadata. Timely results require repository access
 
 ### Debian and Ubuntu
 
-Download the [DEB package, version 0.5.8-1](install/updates-monitor_0.5.8-1_all.deb). The downloaded file must be a DEB package, not a GitHub HTML page.
+Download the [DEB package, version 0.5.10-1](install/updates-monitor_0.5.10-1_all.deb). The downloaded file must be a DEB package, not a GitHub HTML page.
 
 ```sh
-curl -fL -o updates-monitor.deb https://raw.githubusercontent.com/g1n10l/updates-monitor/main/install/updates-monitor_0.5.8-1_all.deb
-echo '671b770cee64739a72c5db55409382e2e85fd0bb103e01e55482bfdda5d81237  updates-monitor.deb' | sha256sum -c -
+curl -fL -o updates-monitor.deb https://raw.githubusercontent.com/g1n10l/updates-monitor/main/install/updates-monitor_0.5.10-1_all.deb
+echo 'db60865f644046f3ffb4ead9598ff4feb40ef166090e90c1580fc3e03fbe9b29  updates-monitor.deb' | sha256sum -c -
 sudo dpkg -i updates-monitor.deb
 ```
 
@@ -67,12 +67,12 @@ sudo apt purge updates-monitor
 
 ### Red Hat family
 
-The [RPM package, version 0.5.8-1](install/updates-monitor-0.5.8-1.noarch.rpm), is experimental. It has not been verified on a running RHEL system and is unsigned.
+The [RPM package, version 0.5.10-1](install/updates-monitor-0.5.10-1.noarch.rpm), is experimental. It has not been verified on a running RHEL system and is unsigned.
 
 ```sh
-curl -fL -o updates-monitor-0.5.8-1.noarch.rpm https://raw.githubusercontent.com/g1n10l/updates-monitor/main/install/updates-monitor-0.5.8-1.noarch.rpm
-echo 'd79de81e3e0773f554fe9f7c244c314bb78bc8299ef5853a727201b48b7d94bb  updates-monitor-0.5.8-1.noarch.rpm' | sha256sum -c -
-sudo dnf install updates-monitor-0.5.8-1.noarch.rpm
+curl -fL -o updates-monitor-0.5.10-1.noarch.rpm https://raw.githubusercontent.com/g1n10l/updates-monitor/main/install/updates-monitor-0.5.10-1.noarch.rpm
+echo 'c281bbd7276ad5b7b7f1d493abe31c52778fd28b9077f9cc7007fc2b4a57849f  updates-monitor-0.5.10-1.noarch.rpm' | sha256sum -c -
+sudo dnf install updates-monitor-0.5.10-1.noarch.rpm
 ```
 
 To remove it, run `sudo dnf remove updates-monitor`. Configuration and schedule files may remain after removing the RPM.
