@@ -60,7 +60,7 @@ cron, a następnie wyłącza wcześniejsze timery updates-monitor.
 
 PAKIET DEB:
   python3 build-deb.py
-  sudo dpkg -i ./../install/updates-monitor_0.5.11-1_all.deb
+  sudo dpkg -i ./../install/updates-monitor_0.5.12-1_all.deb
 
 Jeśli dpkg zgłosi brakujące zależności, doinstaluj je poleceniem:
   sudo apt --fix-broken install
@@ -86,6 +86,7 @@ Plik man po instalacji jest dostępny przez: man updates-monitor.
   sudo updates-monitor status
   sudo updates-monitor interval 6h
   sudo updates-monitor interval 1D
+  sudo updates-monitor interval 30D
   systemctl status cron.service
   systemctl status updates-monitor.service
   journalctl -u updates-monitor.service -n 50 --no-pager
@@ -99,7 +100,7 @@ stan usługi, stan cron i interwał. Jeśli kontrola się nie powiedzie, na koń
 pokazuje do 10 ostatnich błędów usługi z journalctl; mogą obejmować wcześniejsze
 uruchomienia. Usługa jest typu oneshot i po zakończeniu ma stan inactive.
 
-Interwały: 2h, 6h, 12h, 1D, 5D, 10D, 15D. Wartość przechowuje plik
+Interwały: 2h, 6h, 12h, 1D, 5D, 10D, 15D, 30D. Wartość przechowuje plik
 /etc/updates-monitor/schedule.json. Moment ostatniej próby z harmonogramu
 w danym uruchomieniu zapisuje /run/updates-monitor/last-attempt. Cron uruchamia mechanizm
 co minutę; rzeczywisty czas kontroli może mieć opóźnienie do minuty. Po

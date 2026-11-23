@@ -7,8 +7,8 @@ Monitor Linux package updates with Zabbix. The tool reports cumulative scan coun
 
 ## Platforms and packages
 
-- **Debian and Ubuntu:** APT, systemd and cron. Install the [DEB package](../install/updates-monitor_0.5.11-1_all.deb). The optional RUN installer can be built with [build-installer.py](build-installer.py).
-- **RHEL 8/9 and compatible systems:** an [RPM package](../install/updates-monitor-0.5.11-1.noarch.rpm) using DNF 4 and crond is provided as an experimental build. Its classification has been tested with simulated data, but installation and operation on a live RHEL system have not yet been verified. The RPM is unsigned. See the [Red Hat build notes](redhat/README.txt).
+- **Debian and Ubuntu:** APT, systemd and cron. Install the [DEB package](../install/updates-monitor_0.5.12-1_all.deb). The optional RUN installer can be built with [build-installer.py](build-installer.py).
+- **RHEL 8/9 and compatible systems:** an [RPM package](../install/updates-monitor-0.5.12-1.noarch.rpm) using DNF 4 and crond is provided as an experimental build. Its classification has been tested with simulated data, but installation and operation on a live RHEL system have not yet been verified. The RPM is unsigned. See the [Red Hat build notes](redhat/README.txt).
 
 The installers do not install a Zabbix agent or add a Zabbix repository. They configure an existing Zabbix agent or agent 2; set `Server` and, if applicable, `ServerActive` in the agent configuration separately. The RUN installer does not currently include an uninstaller.
 
@@ -19,8 +19,8 @@ The installers do not install a Zabbix agent or add a Zabbix repository. They co
 On Debian, Ubuntu and compatible systems, install the downloaded DEB package:
 
 ```sh
-curl -fL -o updates-monitor.deb https://raw.githubusercontent.com/g1n10l/updates-monitor/main/install/updates-monitor_0.5.11-1_all.deb
-echo '7be4cf1ccfcba6bdf5ec99ee1ab9ea5fa9b7bca17b957cdf7d219b5cbd1e2ccc  updates-monitor.deb' | sha256sum -c -
+curl -fL -o updates-monitor.deb https://raw.githubusercontent.com/g1n10l/updates-monitor/main/install/updates-monitor_0.5.12-1_all.deb
+echo '4ae76174fb4883521260d170f5ac189321da229e54930d5b271bcbd15b526cee  updates-monitor.deb' | sha256sum -c -
 sudo dpkg -i updates-monitor.deb
 ```
 
@@ -39,7 +39,7 @@ After building the optional RUN installer, install using `sudo bash ../install/u
 On RHEL 8/9 and compatible systems, install the experimental RPM package:
 
 ```sh
-sudo dnf install updates-monitor-0.5.11-1.noarch.rpm
+sudo dnf install updates-monitor-0.5.12-1.noarch.rpm
 ```
 
 To uninstall it:
@@ -56,12 +56,13 @@ RPM removal can leave configuration and schedule data on disk. This RPM has not 
 sudo updates-monitor status
 sudo updates-monitor interval 6h
 sudo updates-monitor interval 1D
+sudo updates-monitor interval 30D
 journalctl -u updates-monitor.service -n 50 --no-pager
 ```
 
 Check the installed version with `dpkg-query -W updates-monitor` on Debian/Ubuntu or `rpm -q updates-monitor` on RHEL. `sudo updates-monitor interval 0` disables automatic scans; setting an interval re-enables them. Manual `status` still runs a scan.
 
-Supported intervals are `2h`, `6h`, `12h`, `1D`, `5D`, `10D` and `15D`. A new installation defaults to one day. Cron checks the schedule once a minute; a check is scheduled approximately one minute after boot and thereafter at the chosen interval. Checks can be delayed if the network or cron is unavailable. `status` starts a check and displays its results and service status.
+Supported intervals are `2h`, `6h`, `12h`, `1D`, `5D`, `10D`, `15D` and `30D`. A new installation defaults to one day. Cron checks the schedule once a minute; a check is scheduled approximately one minute after boot and thereafter at the chosen interval. Checks can be delayed if the network or cron is unavailable. `status` starts a check and displays its results and service status.
 
 On Debian and Ubuntu, the scheduler also detects changes to the dpkg package database. Once package manager locks are released, it schedules an additional check, usually within a minute, without a reboot. Changes include package installation, removal and configuration. If a check is already running, the additional check waits for it to finish.
 

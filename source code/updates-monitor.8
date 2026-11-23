@@ -5,7 +5,7 @@ updates-monitor \- sprawdzanie aktualizacji Debiana i Ubuntu
 .B sudo updates-monitor status
 .br
 .B sudo updates-monitor interval
-.RI { 0 | 2h | 6h | 12h | 1D | 5D | 10D | 15D }
+.RI { 0 | 2h | 6h | 12h | 1D | 5D | 10D | 15D | 30D }
 .SH OPIS
 Usługa sprawdza aktualizacje APT
 w trzech kategoriach i udostępnia
@@ -48,7 +48,7 @@ uruchomień.
 .TP
 .BI interval " wartość"
 Ustawia interwał: 2h, 6h, 12h, 1D,
-5D, 10D lub 15D i włącza harmonogram.
+5D, 10D, 15D lub 30D i włącza harmonogram.
 Wartość 0 wyłącza automatyczne kontrole.
 .PP
 Przy aktualizacji stare interwały są

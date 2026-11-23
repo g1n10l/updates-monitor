@@ -24,7 +24,7 @@ DNF = Path('/usr/bin/dnf')
 BOOT_DIR = Path('/boot')
 DPKG_LOCKS = (Path('/var/lib/dpkg/lock-frontend'), Path('/var/lib/dpkg/lock'))
 DPKG_SEEN = RUNTIME / 'dpkg-status-signature'
-INTERVALS = {'2h': 7200, '6h': 21600, '12h': 43200, '1D': 86400, '5D': 432000, '10D': 864000, '15D': 1296000}
+INTERVALS = {'2h': 7200, '6h': 21600, '12h': 43200, '1D': 86400, '5D': 432000, '10D': 864000, '15D': 1296000, '30D': 2592000}
 LEGACY_INTERVALS = {'1h': '2h', '15h': '12h', '1d': '1D', '3d': '5D', '8d': '10D'}
 
 

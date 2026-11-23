@@ -6,11 +6,11 @@ systemd, dnf, cronie, python3 i util-linux. Nie instaluje agenta Zabbix.
 Budowanie na systemie docelowym z pakietem rpm-build:
   ./redhat/build-rpm.sh
 Instalacja i usunięcie powstałego pakietu:
-  sudo dnf install ./../install/updates-monitor-0.5.11-1.noarch.rpm
+  sudo dnf install ./../install/updates-monitor-0.5.12-1.noarch.rpm
   sudo dnf remove updates-monitor
 
 Polecenia: sudo updates-monitor status oraz sudo updates-monitor interval 1D.
-Dostępne interwały: 2h, 6h, 12h, 1D, 5D, 10D, 15D; domyślnie 1D.
+Dostępne interwały: 2h, 6h, 12h, 1D, 5D, 10D, 15D, 30D; domyślnie 1D.
 Cron uruchamia sprawdzenie po restarcie i według wybranego interwału.
 Wyniki przekazywane są przez istniejący szablon zabbix-updates-monitor.json.
 Ponowna instalacja pakietu RPM odtwarza brakujący agent.conf bez zmiany

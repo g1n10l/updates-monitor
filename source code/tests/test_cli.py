@@ -56,10 +56,10 @@ echo 'Przykładowy błąd usługi' ''',
         result = subprocess.run(['bash', str(d / 'cli'), removed_action], env=env, text=True, capture_output=True)
         assert result.returncode == 2 and (d / 'log').read_text() == ''
     (d / 'log').write_text('')
-    result = subprocess.run(['bash', str(d / 'cli'), 'interval', '15D'], env=env, text=True, capture_output=True)
+    result = subprocess.run(['bash', str(d / 'cli'), 'interval', '30D'], env=env, text=True, capture_output=True)
     assert result.returncode == 0, (result.stdout, result.stderr)
     assert (d / 'log').read_text().splitlines() == [
-        'scheduler interval 15D', 'scheduler enable 1', 'systemctl start --no-block updates-monitor-scheduler.service']
+        'scheduler interval 30D', 'scheduler enable 1', 'systemctl start --no-block updates-monitor-scheduler.service']
     (d / 'log').write_text('')
     disabled = subprocess.run(['bash', str(d / 'cli'), 'interval', '0'], env=env, text=True, capture_output=True)
     assert disabled.returncode == 0 and 'wyłączone' in disabled.stdout

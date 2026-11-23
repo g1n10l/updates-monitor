@@ -34,7 +34,7 @@ This is a recommendation based on files in `/boot`, not proof that the bootloade
 
 ## When checks run
 
-- The default interval is **one day**. Available values are `2h`, `6h`, `12h`, `1D`, `5D`, `10D`, and `15D`.
+- The default interval is **one day**. Available values are `2h`, `6h`, `12h`, `1D`, `5D`, `10D`, `15D`, and `30D`.
 - Cron checks the schedule every minute. The first check is scheduled about one minute after boot.
 - On Debian and Ubuntu, a change to the dpkg package database schedules another check after the package manager releases its locks. Installing updates can therefore change the counts without a reboot, usually within a minute.
 - After a reboot, the counts start at zero and the result remains marked invalid until the first successful check. After an error, the previous counts are retained but marked invalid.
@@ -47,11 +47,11 @@ Checks use package repository metadata. Timely results require repository access
 
 ### Debian and Ubuntu
 
-Download the [DEB package, version 0.5.11-1](install/updates-monitor_0.5.11-1_all.deb). The downloaded file must be a DEB package, not a GitHub HTML page.
+Download the [DEB package, version 0.5.12-1](install/updates-monitor_0.5.12-1_all.deb). The downloaded file must be a DEB package, not a GitHub HTML page.
 
 ```sh
-curl -fL -o updates-monitor.deb https://raw.githubusercontent.com/g1n10l/updates-monitor/main/install/updates-monitor_0.5.11-1_all.deb
-echo '7be4cf1ccfcba6bdf5ec99ee1ab9ea5fa9b7bca17b957cdf7d219b5cbd1e2ccc  updates-monitor.deb' | sha256sum -c -
+curl -fL -o updates-monitor.deb https://raw.githubusercontent.com/g1n10l/updates-monitor/main/install/updates-monitor_0.5.12-1_all.deb
+echo '4ae76174fb4883521260d170f5ac189321da229e54930d5b271bcbd15b526cee  updates-monitor.deb' | sha256sum -c -
 sudo dpkg -i updates-monitor.deb
 ```
 
@@ -67,12 +67,12 @@ sudo apt purge updates-monitor
 
 ### Red Hat family
 
-The [RPM package, version 0.5.11-1](install/updates-monitor-0.5.11-1.noarch.rpm), is experimental. It has not been verified on a running RHEL system and is unsigned.
+The [RPM package, version 0.5.12-1](install/updates-monitor-0.5.12-1.noarch.rpm), is experimental. It has not been verified on a running RHEL system and is unsigned.
 
 ```sh
-curl -fL -o updates-monitor-0.5.11-1.noarch.rpm https://raw.githubusercontent.com/g1n10l/updates-monitor/main/install/updates-monitor-0.5.11-1.noarch.rpm
-echo '259e7a7c6af4dfd9162b79b9aab8f298be656afc795381ae98866e02c4cb4a61  updates-monitor-0.5.11-1.noarch.rpm' | sha256sum -c -
-sudo dnf install updates-monitor-0.5.11-1.noarch.rpm
+curl -fL -o updates-monitor-0.5.12-1.noarch.rpm https://raw.githubusercontent.com/g1n10l/updates-monitor/main/install/updates-monitor-0.5.12-1.noarch.rpm
+echo 'a0374823ff3b828937b8d56de5e866d42754305a75ef676b023418208a61a479  updates-monitor-0.5.12-1.noarch.rpm' | sha256sum -c -
+sudo dnf install updates-monitor-0.5.12-1.noarch.rpm
 ```
 
 To remove it, run `sudo dnf remove updates-monitor`. Configuration and schedule files may remain after removing the RPM.
@@ -83,6 +83,7 @@ To remove it, run `sudo dnf remove updates-monitor`. Configuration and schedule 
 sudo updates-monitor status
 sudo updates-monitor interval 6h
 sudo updates-monitor interval 1D
+sudo updates-monitor interval 30D
 man updates-monitor
 ```
 
