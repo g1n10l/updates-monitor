@@ -14,6 +14,8 @@ The results are split into three categories:
 
 **Restart notification:** Zabbix shows a warning naming the host when it requires a restart and a successful update check reports `0` regular, security, and kernel updates. See [Restart required after updates](#restart-required-after-updates) for the detection and recovery rules.
 
+**Kernel update notification:** When a newer kernel image is installed and a successful update check reports zero updates in all three categories, Zabbix shows `Zaktualizowany kernel (zalecany restart)` with the host name. See [New kernel restart recommendation](#new-kernel-restart-recommendation).
+
 Zabbix also receives the time of the last check, the schedule status, and the service status. The public [Zabbix template](template/updates-monitor.json) is included in the installation package at `/usr/share/updates-monitor/zabbix-updates-monitor.json`. The installer configures an existing Zabbix agent or agent 2 to read the results. Install and configure the agent separately.
 
 ## Restart required after updates
@@ -23,6 +25,12 @@ The scheduler reports reboot status in `updates.monitor.reboot_required` through
 On Debian and Ubuntu the check uses `/run/reboot-required`, which only reflects packages that create the marker. On RHEL-compatible systems it runs `dnf needs-restarting -r` from `dnf-plugins-core` as the scheduler user. A missing tool, unrecognized result, failed check or old agent reports status 2 (unknown), not a clear result. Monitoring covers host reboots; individual services may also require a restart. The alert does not restart a host.
 
 Update the installed monitor on each host and import the updated template. A template imported before the new monitor reports an unknown reboot status until the host is upgraded. Existing agent keys are unchanged.
+
+## New kernel restart recommendation
+
+The Zabbix item `updates.monitor.kernel_update_pending` compares the running kernel version with kernel images of the same flavour or architecture in `/boot`. A newer image yields 1; no newer image yields 0; an unsupported version format, missing images or comparison error yields 2 (unknown). The warning names the host when the value is 1 and a valid update scan shows all three update categories at zero. It resolves after the running kernel is no older than the matching images or when a valid scan finds pending updates. An unknown result alone does not close it.
+
+This is a recommendation based on files in `/boot`, not proof that the bootloader is configured to load the newer image. Retained or manually installed images can influence the result. It is independent of the system reboot-required marker and may appear alongside the general reboot warning. A separate boot partition must be mounted for the check. The scheduler refreshes the result on each tick, normally once per minute.
 
 ## When checks run
 
@@ -141,9 +149,3 @@ for test in "source code"/tests/test_*.py; do
     python3 "$test" || exit 1
 done
 ```
-
-## New kernel restart recommendation
-
-The Zabbix item `updates.monitor.kernel_update_pending` compares the running kernel version with kernel images of the same flavour or architecture in `/boot`. A newer image yields 1; no newer image yields 0; an unsupported version format, missing images or comparison error yields 2 (unknown). The warning names the host when the value is 1 and a valid update scan shows all three update categories at zero. It resolves after the running kernel is no older than the matching images or when a valid scan finds pending updates. An unknown result alone does not close it.
-
-This is a recommendation based on files in `/boot`, not proof that the bootloader is configured to load the newer image. Retained or manually installed images can influence the result. It is independent of the system reboot-required marker and may appear alongside the general reboot warning. A separate boot partition must be mounted for the check. The scheduler refreshes the result on each tick, normally once per minute.
