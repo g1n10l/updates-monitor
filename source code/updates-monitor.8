@@ -40,7 +40,7 @@ Wykonuje kontrolę także przy
 wyłączonym harmonogramie. Pokazuje
 liczby pakietów, czas ostatniej
 udanej kontroli, stan usługi,
-cron, harmonogramu i interwał.
+cron, harmonogramu, interwał i stan restartu.
 W razie nieudanego uruchomienia
 pokazuje do 10 ostatnich błędów
 z journalctl, również z poprzednich
@@ -58,7 +58,18 @@ zamieniane: 1h na 2h, 15h na 12h,
 .SH PRZYKŁADY
 .nf
 sudo updates-monitor status
+sudo updates-monitor interval 0
+sudo updates-monitor interval 2h
 sudo updates-monitor interval 6h
+sudo updates-monitor interval 12h
+sudo updates-monitor interval 1D
+sudo updates-monitor interval 5D
+sudo updates-monitor interval 10D
+sudo updates-monitor interval 15D
+sudo updates-monitor interval 30D
+dpkg-query -W updates-monitor
+systemctl status updates-monitor.service --no-pager
+journalctl -u updates-monitor.service -n 50 --no-pager
 .fi
 .SH STAN I BŁĘDY
 Usługa jest typu oneshot i po
@@ -89,6 +100,17 @@ Dziennik usługi:
 .nf
 journalctl -u updates-monitor.service -n 50 --no-pager
 .fi
+.SH RESTART I ZABBIX
+Po wykryciu znacznika restartu lub nowszego obrazu kernela status wyświetla
+komunikat „wymagany restart systemu”. Nieznane wyniki nie potwierdzają,
+że restart jest zbędny. Porównanie kerneli korzysta z obrazów w /boot;
+nie potwierdza, który obraz wybierze bootloader.
+.PP
+Zabbix zgłasza jeden alarm „Wymagany restart hosta”, gdy restart jest
+wymagany, usługa kontroli jest nieaktywna, a poprawna i aktualna kontrola
+po zmianie bazy pakietów pokazuje zera we wszystkich trzech kategoriach.
+Alarm zamyka się po potwierdzeniu przez oba źródła, że restart nie jest
+wymagany, oraz przy poprawnym wyniku kontroli.
 .SH OGRANICZENIA
 Archiwa bezpieczeństwa rozpoznawane
 są po nazwie kończącej się na

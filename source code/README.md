@@ -7,8 +7,8 @@ Monitor Linux package updates with Zabbix. The tool reports cumulative scan coun
 
 ## Platforms and packages
 
-- **Debian and Ubuntu:** APT, systemd and cron. Install the [DEB package](../install/updates-monitor_0.5.12-1_all.deb). The optional RUN installer can be built with [build-installer.py](build-installer.py).
-- **RHEL 8/9 and compatible systems:** an [RPM package](../install/updates-monitor-0.5.12-1.noarch.rpm) using DNF 4 and crond is provided as an experimental build. Its classification has been tested with simulated data, but installation and operation on a live RHEL system have not yet been verified. The RPM is unsigned. See the [Red Hat build notes](redhat/README.txt).
+- **Debian and Ubuntu:** APT, systemd and cron. Install the [DEB package](../install/updates-monitor_0.5.13-1_all.deb). The optional RUN installer can be built with [build-installer.py](build-installer.py).
+- **RHEL 8/9 and compatible systems:** an [RPM package](../install/updates-monitor-0.5.13-1.noarch.rpm) using DNF 4 and crond is provided as an experimental build. Its classification has been tested with simulated data, but installation and operation on a live RHEL system have not yet been verified. The RPM is unsigned. See the [Red Hat build notes](redhat/README.txt).
 
 The installers do not install a Zabbix agent or add a Zabbix repository. They configure an existing Zabbix agent or agent 2; set `Server` and, if applicable, `ServerActive` in the agent configuration separately. The RUN installer does not currently include an uninstaller.
 
@@ -19,8 +19,8 @@ The installers do not install a Zabbix agent or add a Zabbix repository. They co
 On Debian, Ubuntu and compatible systems, install the downloaded DEB package:
 
 ```sh
-curl -fL -o updates-monitor.deb https://raw.githubusercontent.com/g1n10l/updates-monitor/main/install/updates-monitor_0.5.12-1_all.deb
-echo '4ae76174fb4883521260d170f5ac189321da229e54930d5b271bcbd15b526cee  updates-monitor.deb' | sha256sum -c -
+curl -fL -o updates-monitor.deb https://raw.githubusercontent.com/g1n10l/updates-monitor/main/install/updates-monitor_0.5.13-1_all.deb
+echo '98b54ba8cdee04d80c1880ff8d7c523c6805828eae8953f338df58f7177ded2d  updates-monitor.deb' | sha256sum -c -
 sudo dpkg -i updates-monitor.deb
 ```
 
@@ -39,7 +39,7 @@ After building the optional RUN installer, install using `sudo bash ../install/u
 On RHEL 8/9 and compatible systems, install the experimental RPM package:
 
 ```sh
-sudo dnf install updates-monitor-0.5.12-1.noarch.rpm
+sudo dnf install updates-monitor-0.5.13-1.noarch.rpm
 ```
 
 To uninstall it:

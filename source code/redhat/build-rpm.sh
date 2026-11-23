@@ -21,4 +21,4 @@ cp "$root/redhat/README.txt" "$work/payload/README.txt"
 cp "$root/redhat/updates-monitor.8" "$work/payload/updates-monitor.8"
 tar -C "$work/payload" -czf "$work/SOURCES/updates-monitor-rpm.tar.gz" .
 rpmbuild --define "_topdir $work" --define "_tmppath $work" --define '_prefix /usr' --define '_sysconfdir /etc' --define '_unitdir /usr/lib/systemd/system' --define '_rpmformat 4' --define '_binary_payload w9.gzdio' --define 'dist %{nil}' --target noarch-linux -bb "$root/redhat/updates-monitor.spec"
-cp "$work/RPMS/noarch/updates-monitor-0.5.12-1.noarch.rpm" "$output/"
+cp "$work/RPMS/noarch/updates-monitor-0.5.13-1.noarch.rpm" "$output/"

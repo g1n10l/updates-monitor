@@ -6,7 +6,7 @@ systemd, dnf, cronie, python3 i util-linux. Nie instaluje agenta Zabbix.
 Budowanie na systemie docelowym z pakietem rpm-build:
   ./redhat/build-rpm.sh
 Instalacja i usunięcie powstałego pakietu:
-  sudo dnf install ./../install/updates-monitor-0.5.12-1.noarch.rpm
+  sudo dnf install ./../install/updates-monitor-0.5.13-1.noarch.rpm
   sudo dnf remove updates-monitor
 
 Polecenia: sudo updates-monitor status oraz sudo updates-monitor interval 1D.

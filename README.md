@@ -47,11 +47,11 @@ Checks use package repository metadata. Timely results require repository access
 
 ### Debian and Ubuntu
 
-Download the [DEB package, version 0.5.12-1](install/updates-monitor_0.5.12-1_all.deb). The downloaded file must be a DEB package, not a GitHub HTML page.
+Download the [DEB package, version 0.5.13-1](install/updates-monitor_0.5.13-1_all.deb). The downloaded file must be a DEB package, not a GitHub HTML page.
 
 ```sh
-curl -fL -o updates-monitor.deb https://raw.githubusercontent.com/g1n10l/updates-monitor/main/install/updates-monitor_0.5.12-1_all.deb
-echo '4ae76174fb4883521260d170f5ac189321da229e54930d5b271bcbd15b526cee  updates-monitor.deb' | sha256sum -c -
+curl -fL -o updates-monitor.deb https://raw.githubusercontent.com/g1n10l/updates-monitor/main/install/updates-monitor_0.5.13-1_all.deb
+echo '98b54ba8cdee04d80c1880ff8d7c523c6805828eae8953f338df58f7177ded2d  updates-monitor.deb' | sha256sum -c -
 sudo dpkg -i updates-monitor.deb
 ```
 
@@ -67,12 +67,12 @@ sudo apt purge updates-monitor
 
 ### Red Hat family
 
-The [RPM package, version 0.5.12-1](install/updates-monitor-0.5.12-1.noarch.rpm), is experimental. It has not been verified on a running RHEL system and is unsigned.
+The [RPM package, version 0.5.13-1](install/updates-monitor-0.5.13-1.noarch.rpm), is experimental. It has not been verified on a running RHEL system and is unsigned.
 
 ```sh
-curl -fL -o updates-monitor-0.5.12-1.noarch.rpm https://raw.githubusercontent.com/g1n10l/updates-monitor/main/install/updates-monitor-0.5.12-1.noarch.rpm
-echo 'a0374823ff3b828937b8d56de5e866d42754305a75ef676b023418208a61a479  updates-monitor-0.5.12-1.noarch.rpm' | sha256sum -c -
-sudo dnf install updates-monitor-0.5.12-1.noarch.rpm
+curl -fL -o updates-monitor-0.5.13-1.noarch.rpm https://raw.githubusercontent.com/g1n10l/updates-monitor/main/install/updates-monitor-0.5.13-1.noarch.rpm
+echo '14cf69934586d742f9d3a6990dd28a863685526089597b7742b5111414b1302b  updates-monitor-0.5.13-1.noarch.rpm' | sha256sum -c -
+sudo dnf install updates-monitor-0.5.13-1.noarch.rpm
 ```
 
 To remove it, run `sudo dnf remove updates-monitor`. Configuration and schedule files may remain after removing the RPM.

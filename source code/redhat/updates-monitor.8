@@ -20,10 +20,36 @@ być liczony przy kolejnych kontrolach.
 .SH POLECENIA
 .TP
 .B status
-Uruchamia kontrolę i pokazuje liczby pakietów, stan usługi i interwał.
+Uruchamia kontrolę także przy wyłączonym harmonogramie i pokazuje sumy
+kontroli, stan restartu, usługi oraz interwał.
 .TP
 .BI interval " wartość"
 Wartość 0 wyłącza automatyczne kontrole; ustawienie interwału ponownie je włącza.
+.SH PRZYKŁADY
+.nf
+sudo updates-monitor status
+sudo updates-monitor interval 0
+sudo updates-monitor interval 2h
+sudo updates-monitor interval 6h
+sudo updates-monitor interval 12h
+sudo updates-monitor interval 1D
+sudo updates-monitor interval 5D
+sudo updates-monitor interval 10D
+sudo updates-monitor interval 15D
+sudo updates-monitor interval 30D
+rpm -q updates-monitor
+systemctl status updates-monitor.service --no-pager
+journalctl -u updates-monitor.service -n 50 --no-pager
+.fi
+.SH RESTART I ZABBIX
+Stan restartu uwzględnia zarówno wskaźnik systemowy, jak i nowszy obraz
+kernela w /boot. W razie nieznanego wyniku nie przyjmuje, że restart jest
+zbędny. Porównanie nie potwierdza, jaki obraz wybierze bootloader.
+.PP
+Zabbix zgłasza jeden alarm „Wymagany restart hosta” po poprawnej, aktualnej
+kontroli po zmianie pakietów, gdy wszystkie trzy kategorie wynoszą zero,
+a usługa kontroli jest nieaktywna. Alarm zamyka się po potwierdzeniu przez
+oba źródła braku potrzeby restartu i przy poprawnym wyniku kontroli.
 .SH OGRANICZENIA
 DNF repoquery pokazuje kandydatów, a nie rozwiązaną transakcję.
 Rozpoznawanie aktualizacji bezpieczeństwa wymaga metadanych updateinfo

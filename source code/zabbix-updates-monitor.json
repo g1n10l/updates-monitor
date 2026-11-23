@@ -15,7 +15,7 @@
         "description": "Monitorowanie aktualizacji systemu przez updates-monitor i agenta Zabbix. Autor: G1n10L. Liczniki sumują wyniki kolejnych kontroli i zerują się, gdy w kategorii nie ma aktualizacji. Trzecia kategoria obejmuje wszystkie aktualizacje kernela.",
         "vendor": {
           "name": "G1n10L",
-          "version": "0.5.12"
+          "version": "0.5.13"
         },
         "groups": [
           {
