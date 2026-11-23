@@ -7,8 +7,8 @@ Monitor Linux package updates with Zabbix. The tool reports cumulative scan coun
 
 ## Platforms and packages
 
-- **Debian and Ubuntu:** APT, systemd and cron. Install the [DEB package](../install/updates-monitor_0.5.5-1_all.deb). The optional RUN installer can be built with [build-installer.py](build-installer.py).
-- **RHEL 8/9 and compatible systems:** an [RPM package](../install/updates-monitor-0.5.5-1.noarch.rpm) using DNF 4 and crond is provided as an experimental build. Its classification has been tested with simulated data, but installation and operation on a live RHEL system have not yet been verified. The RPM is unsigned. See the [Red Hat build notes](redhat/README.txt).
+- **Debian and Ubuntu:** APT, systemd and cron. Install the [DEB package](../install/updates-monitor_0.5.6-1_all.deb). The optional RUN installer can be built with [build-installer.py](build-installer.py).
+- **RHEL 8/9 and compatible systems:** an [RPM package](../install/updates-monitor-0.5.6-1.noarch.rpm) using DNF 4 and crond is provided as an experimental build. Its classification has been tested with simulated data, but installation and operation on a live RHEL system have not yet been verified. The RPM is unsigned. See the [Red Hat build notes](redhat/README.txt).
 
 The installers do not install a Zabbix agent or add a Zabbix repository. They configure an existing Zabbix agent or agent 2; set `Server` and, if applicable, `ServerActive` in the agent configuration separately. The RUN installer does not currently include an uninstaller.
 
@@ -19,8 +19,8 @@ The installers do not install a Zabbix agent or add a Zabbix repository. They co
 On Debian, Ubuntu and compatible systems, install the downloaded DEB package:
 
 ```sh
-curl -fL -o updates-monitor.deb https://raw.githubusercontent.com/g1n10l/updates-monitor/main/install/updates-monitor_0.5.5-1_all.deb
-echo '82fbf0c13ae0a60fb7090a59518cbf90f8fc311a0c97ff432aa1d16cbe30b022  updates-monitor.deb' | sha256sum -c -
+curl -fL -o updates-monitor.deb https://raw.githubusercontent.com/g1n10l/updates-monitor/main/install/updates-monitor_0.5.6-1_all.deb
+echo 'ebde7671af06da0f62d494155788da3fe98f5239c546d8a7e187a9ac8c87d3d0  updates-monitor.deb' | sha256sum -c -
 sudo dpkg -i updates-monitor.deb
 ```
 
@@ -39,7 +39,7 @@ After building the optional RUN installer, install using `sudo bash ../install/u
 On RHEL 8/9 and compatible systems, install the experimental RPM package:
 
 ```sh
-sudo dnf install updates-monitor-0.5.5-1.noarch.rpm
+sudo dnf install updates-monitor-0.5.6-1.noarch.rpm
 ```
 
 To uninstall it:
@@ -69,7 +69,7 @@ The schedule is stored in `/etc/updates-monitor/schedule.json`. Results and heal
 
 ## Zabbix
 
-Import [zabbix-updates-monitor.json](zabbix-updates-monitor.json) into Zabbix 7.4 and link the template **Updates monitor Debian Ubuntu** to the host. Despite its name, the template uses the same agent keys for the experimental RPM variant. The template includes one item and trigger for each package category, plus health and freshness alerts. The event name shows the cumulative count at the time of the event; enable operational data in the Problems widget to see the latest cumulative count.
+Import [zabbix-updates-monitor.json](zabbix-updates-monitor.json) into Zabbix 7.4 and link the template **updates-monitor** to the host. The template uses the same agent keys for the experimental RPM variant. The template includes one item and trigger for each package category, plus health and freshness alerts. The event name shows the cumulative count at the time of the event; enable operational data in the Problems widget to see the latest cumulative count.
 
 The installer adds `Include=/etc/zabbix/updates-monitor/agent.conf` to each detected agent configuration. Reinstalling the DEB or RPM restores a missing `agent.conf` without replacing an existing one. To test a configured agent locally:
 
@@ -89,3 +89,11 @@ On RHEL-compatible systems, the DNF variant reports upgrade candidates rather th
 ## Documentation and author
 
 The manual is available after installation with `man updates-monitor`. More detailed Polish instructions are in [README.txt](README.txt). Created by **G1n10L**.
+
+## Restart required after updates
+
+The scheduler reports reboot status in `updates.monitor.reboot_required` through the existing health item. Zabbix raises a warning containing the host name when a restart is required, and closes it only after a confirmed clear result. The status is refreshed on each scheduler tick, normally once per minute, independently of the update scan interval. The agent and Zabbix polling add delay.
+
+On Debian and Ubuntu the check uses `/run/reboot-required`, which only reflects packages that create the marker. On RHEL-compatible systems it runs `dnf needs-restarting -r` from `dnf-plugins-core` as the scheduler user. A missing tool, unrecognized result, failed check or old agent reports status 2 (unknown), not a clear result. Monitoring covers host reboots; individual services may also require a restart. The alert does not restart a host.
+
+Update the installed monitor on each host and import the updated template. A template imported before the new monitor reports an unknown reboot status until the host is upgraded. Existing agent keys are unchanged.

@@ -60,7 +60,7 @@ cron, a następnie wyłącza wcześniejsze timery updates-monitor.
 
 PAKIET DEB:
   python3 build-deb.py
-  sudo dpkg -i ./../install/updates-monitor_0.5.5-1_all.deb
+  sudo dpkg -i ./../install/updates-monitor_0.5.6-1_all.deb
 
 Jeśli dpkg zgłosi brakujące zależności, doinstaluj je poleceniem:
   sudo apt --fix-broken install
@@ -127,7 +127,7 @@ Ponowna instalacja pakietu DEB odtwarza brakujący agent.conf bez zmiany
 istniejącego pliku konfiguracyjnego.
 
 W Data collection → Templates → Import zaimportuj zabbix-updates-monitor.json,
-a następnie przypisz szablon „Updates monitor Debian Ubuntu” do hosta.
+a następnie przypisz szablon „updates-monitor” do hosta.
 Agent pasywny jest odpytywany co minutę; odczyt nie uruchamia APT.
 
 Trzy wyzwalacze dotyczą aktualizacji regularnych (Information, niebieski),

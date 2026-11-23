@@ -7,6 +7,14 @@ import subprocess
 ROOT = Path(__file__).resolve().parents[1]
 data = json.loads((ROOT / 'zabbix-updates-monitor.json').read_text())['zabbix_export']
 items = {i['key']: i for i in data['templates'][0]['items']}
+assert data['templates'][0]['template'] == 'updates-monitor'
+assert data['templates'][0]['name'] == 'updates-monitor'
+for trigger in data['triggers']:
+    for key in ('expression', 'recovery_expression'):
+        if key in trigger:
+            assert '/Updates monitor Debian Ubuntu/' not in trigger[key]
+            assert '/updates-monitor/' in trigger[key]
+
 required = {'regular', 'security', 'kernel_security'}
 for key in required:
     item = items['updates.monitor.' + key]

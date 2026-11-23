@@ -1,12 +1,12 @@
 Name:           updates-monitor
-Version:        0.5.5
+Version:        0.5.6
 Release:        1%{?dist}
 Summary:        Monitor DNF updates for Zabbix
 License:        Proprietary
 URL:            https://github.com/g1n10l/updates-monitor
 BuildArch:      noarch
 Source0:        updates-monitor-rpm.tar.gz
-Requires:       python3, dnf, cronie, systemd, util-linux, policycoreutils, policycoreutils-python-utils
+Requires:       python3, dnf, dnf-plugins-core, cronie, systemd, util-linux, policycoreutils, policycoreutils-python-utils
 
 %description
 Monitor cumulative regular, security and kernel update checks using DNF.

@@ -17,6 +17,8 @@ LAST = RUNTIME / 'last-attempt'
 LEGACY = Path('/var/lib/updates-monitor/legacy-schedule.json')
 CRON_FILE = Path('/etc/cron.d/updates-monitor')
 DPKG_STATUS = Path('/var/lib/dpkg/status')
+REBOOT_MARKER = Path('/run/reboot-required')
+DNF = Path('/usr/bin/dnf')
 DPKG_LOCKS = (Path('/var/lib/dpkg/lock-frontend'), Path('/var/lib/dpkg/lock'))
 DPKG_SEEN = RUNTIME / 'dpkg-status-signature'
 INTERVALS = {'2h': 7200, '6h': 21600, '12h': 43200, '1D': 86400, '5D': 432000, '10D': 864000, '15D': 1296000}
@@ -87,6 +89,27 @@ def init():
         LEGACY.unlink()
 
 
+def reboot_required():
+    """Return 0=no marker, 1=reboot required, 2=unknown/error."""
+    try:
+        if DPKG_STATUS.is_file():
+            return int(REBOOT_MARKER.is_file())
+        if not DNF.is_file():
+            return 2
+        result = subprocess.run([str(DNF), '--disablerepo=*', 'needs-restarting', '-r'],
+                                stdout=subprocess.PIPE, stderr=subprocess.PIPE,
+                                universal_newlines=True, timeout=45,
+                                env=dict(os.environ, LC_ALL='C'))
+        # DNF also returns 1 for errors: accept only its explicit reboot hint.
+        if result.returncode == 0 and 'Reboot should not be necessary.' in result.stdout:
+            return 0
+        if result.returncode == 1 and 'Reboot is required to fully utilize these updates.' in result.stdout:
+            return 1
+    except (OSError, subprocess.SubprocessError) as exc:
+        print('Nie można sprawdzić restartu:', exc, file=sys.stderr)
+    return 2
+
+
 def health(data):
     cron = command('is-active', '--quiet', 'cron.service', check=False).returncode == 0
     unit = command('show', 'updates-monitor.service', '--property=ActiveState', '--value').stdout.strip()
@@ -98,7 +121,8 @@ def health(data):
         for line in CRON_FILE.read_text().splitlines())
     return {'valid': 1, 'scheduler_active': int(data['enabled'] and cron and cron_configured),
             'service_state': states[unit], 'service_failed': int(unit == 'failed'),
-            'interval_seconds': INTERVALS[data['interval']], 'updated_at': int(time.time())}
+            'interval_seconds': INTERVALS[data['interval']], 'updated_at': int(time.time()),
+            'reboot_required': reboot_required()}
 
 
 def dpkg_snapshot():
@@ -161,7 +185,7 @@ def tick():
             print('Błąd harmonogramu:', exc, file=sys.stderr)
             atomic(HEALTH, json.dumps({'valid': 0, 'scheduler_active': 0, 'service_state': 0,
                                       'service_failed': 0, 'interval_seconds': 0,
-                                      'updated_at': int(time.time())}, separators=(',', ':')))
+                                      'updated_at': int(time.time()), 'reboot_required': 2}, separators=(',', ':')))
             raise SystemExit(1)
 
 

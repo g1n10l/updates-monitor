@@ -10,12 +10,12 @@
     "templates": [
       {
         "uuid": "ac17075fc25f43c082fd459ebe1cf892",
-        "template": "Updates monitor Debian Ubuntu",
-        "name": "Updates monitor Debian Ubuntu",
+        "template": "updates-monitor",
+        "name": "updates-monitor",
         "description": "Monitorowanie aktualizacji systemu przez updates-monitor i agenta Zabbix. Autor: G1n10L. Liczniki sumują wyniki kolejnych kontroli i zerują się, gdy w kategorii nie ma aktualizacji. Trzecia kategoria obejmuje wszystkie aktualizacje kernela.",
         "vendor": {
           "name": "G1n10L",
-          "version": "0.5.5"
+          "version": "0.5.6"
         },
         "groups": [
           {
@@ -280,6 +280,31 @@
             "master_item": {
               "key": "updates.monitor.health"
             }
+          },
+          {
+            "uuid": "f7f7e740cf324daaa681379402214081",
+            "name": "System: wymagany restart",
+            "type": "DEPENDENT",
+            "key": "updates.monitor.reboot_required",
+            "delay": "0",
+            "history": "30d",
+            "trends": "365d",
+            "value_type": "UNSIGNED",
+            "description": "0: brak sygnału, 1: wymagany restart, 2: brak wiarygodnego wyniku.",
+            "preprocessing": [
+              {
+                "type": "JAVASCRIPT",
+                "parameters": [
+                  "var d = JSON.parse(value); return d.valid === 1 && (d.reboot_required === 0 || d.reboot_required === 1) ? d.reboot_required : 2;"
+                ]
+              }
+            ],
+            "master_item": {
+              "key": "updates.monitor.health"
+            },
+            "valuemap": {
+              "name": "Stan restartu systemu"
+            }
           }
         ],
         "valuemaps": [
@@ -322,6 +347,24 @@
                 "newvalue": "Aktywny"
               }
             ]
+          },
+          {
+            "uuid": "a945b10d880741b982a8910dbc5abefd",
+            "name": "Stan restartu systemu",
+            "mappings": [
+              {
+                "value": "0",
+                "newvalue": "Brak sygnału restartu"
+              },
+              {
+                "value": "1",
+                "newvalue": "Wymagany restart"
+              },
+              {
+                "value": "2",
+                "newvalue": "Nieznany"
+              }
+            ]
           }
         ]
       }
@@ -329,9 +372,9 @@
     "triggers": [
       {
         "uuid": "fbf1b94afafe4a678684bbd2a5d58243",
-        "expression": "last(/Updates monitor Debian Ubuntu/updates.monitor.regular)>0 and last(/Updates monitor Debian Ubuntu/updates.monitor.valid)=1",
+        "expression": "last(/updates-monitor/updates.monitor.regular)>0 and last(/updates-monitor/updates.monitor.valid)=1",
         "recovery_mode": "RECOVERY_EXPRESSION",
-        "recovery_expression": "last(/Updates monitor Debian Ubuntu/updates.monitor.regular)=0 and last(/Updates monitor Debian Ubuntu/updates.monitor.valid)=1",
+        "recovery_expression": "last(/updates-monitor/updates.monitor.regular)=0 and last(/updates-monitor/updates.monitor.valid)=1",
         "name": "Dostępne aktualizacje regularne",
         "opdata": "Suma wyników kontroli: {ITEM.LASTVALUE1}",
         "priority": "INFO",
@@ -340,9 +383,9 @@
       },
       {
         "uuid": "3e8b83b629004344ba3526bf5a2dfe43",
-        "expression": "last(/Updates monitor Debian Ubuntu/updates.monitor.security)>0 and last(/Updates monitor Debian Ubuntu/updates.monitor.valid)=1",
+        "expression": "last(/updates-monitor/updates.monitor.security)>0 and last(/updates-monitor/updates.monitor.valid)=1",
         "recovery_mode": "RECOVERY_EXPRESSION",
-        "recovery_expression": "last(/Updates monitor Debian Ubuntu/updates.monitor.security)=0 and last(/Updates monitor Debian Ubuntu/updates.monitor.valid)=1",
+        "recovery_expression": "last(/updates-monitor/updates.monitor.security)=0 and last(/updates-monitor/updates.monitor.valid)=1",
         "name": "Dostępne aktualizacje bezpieczeństwa",
         "opdata": "Suma wyników kontroli: {ITEM.LASTVALUE1}",
         "priority": "WARNING",
@@ -351,9 +394,9 @@
       },
       {
         "uuid": "184b4e8e3f4f462986dbf1f37f02422d",
-        "expression": "last(/Updates monitor Debian Ubuntu/updates.monitor.kernel_security)>0 and last(/Updates monitor Debian Ubuntu/updates.monitor.valid)=1",
+        "expression": "last(/updates-monitor/updates.monitor.kernel_security)>0 and last(/updates-monitor/updates.monitor.valid)=1",
         "recovery_mode": "RECOVERY_EXPRESSION",
-        "recovery_expression": "last(/Updates monitor Debian Ubuntu/updates.monitor.kernel_security)=0 and last(/Updates monitor Debian Ubuntu/updates.monitor.valid)=1",
+        "recovery_expression": "last(/updates-monitor/updates.monitor.kernel_security)=0 and last(/updates-monitor/updates.monitor.valid)=1",
         "name": "Dostępne aktualizacje kernela",
         "opdata": "Suma wyników kontroli: {ITEM.LASTVALUE1}",
         "priority": "DISASTER",
@@ -362,14 +405,14 @@
       },
       {
         "uuid": "fec7454b52dd44dea8d0b55ea11e832c",
-        "expression": "max(/Updates monitor Debian Ubuntu/updates.monitor.valid,2m)=0 and last(/Updates monitor Debian Ubuntu/updates.monitor.health.valid)=1 and (last(/Updates monitor Debian Ubuntu/updates.monitor.health.service_state)=0 or last(/Updates monitor Debian Ubuntu/updates.monitor.health.service_state)=4)",
+        "expression": "max(/updates-monitor/updates.monitor.valid,2m)=0 and last(/updates-monitor/updates.monitor.health.valid)=1 and (last(/updates-monitor/updates.monitor.health.service_state)=0 or last(/updates-monitor/updates.monitor.health.service_state)=4)",
         "name": "Nie powiodło się sprawdzanie aktualizacji",
         "priority": "WARNING",
         "description": "Brak poprawnej kontroli przez co najmniej 2 minuty; alarm jest wstrzymany, gdy kontrola trwa."
       },
       {
         "uuid": "5c73a595e4624a07923e8859fb949c14",
-        "expression": "nodata(/Updates monitor Debian Ubuntu/updates.monitor.raw,10m)=1",
+        "expression": "nodata(/updates-monitor/updates.monitor.raw,10m)=1",
         "name": "Brak danych monitora aktualizacji przez 10 minut",
         "priority": "WARNING",
         "description": "Sprawdź połączenie z agentem i jego konfigurację."
@@ -377,26 +420,44 @@
       {
         "uuid": "10fc6a8aa8614368938d59a1e81ad809",
         "name": "Harmonogram sprawdzania aktualizacji jest wyłączony",
-        "expression": "last(/Updates monitor Debian Ubuntu/updates.monitor.health.valid)=1 and last(/Updates monitor Debian Ubuntu/updates.monitor.health.scheduler_active)=0",
+        "expression": "last(/updates-monitor/updates.monitor.health.valid)=1 and last(/updates-monitor/updates.monitor.health.scheduler_active)=0",
         "priority": "WARNING"
       },
       {
         "uuid": "666ffc0fbeb54f6f97240876e497447d",
         "name": "Usługa sprawdzania aktualizacji zakończyła się błędem",
-        "expression": "last(/Updates monitor Debian Ubuntu/updates.monitor.health.valid)=1 and last(/Updates monitor Debian Ubuntu/updates.monitor.health.service_failed)=1",
+        "expression": "last(/updates-monitor/updates.monitor.health.valid)=1 and last(/updates-monitor/updates.monitor.health.service_failed)=1",
         "priority": "WARNING"
       },
       {
         "uuid": "d8c81d3162ac4fd2b79e522c8c9e640a",
         "name": "Brak aktualnego stanu harmonogramu aktualizacji",
-        "expression": "max(/Updates monitor Debian Ubuntu/updates.monitor.health.valid,3m)=0 or nodata(/Updates monitor Debian Ubuntu/updates.monitor.health,5m)=1 or (last(/Updates monitor Debian Ubuntu/updates.monitor.health.updated_at)>0 and now()-last(/Updates monitor Debian Ubuntu/updates.monitor.health.updated_at)>180)",
+        "expression": "max(/updates-monitor/updates.monitor.health.valid,3m)=0 or nodata(/updates-monitor/updates.monitor.health,5m)=1 or (last(/updates-monitor/updates.monitor.health.updated_at)>0 and now()-last(/updates-monitor/updates.monitor.health.updated_at)>180)",
         "priority": "WARNING"
       },
       {
         "uuid": "d5305b01e2bf47c3b12d19138b119bb0",
         "name": "Wynik sprawdzania aktualizacji jest nieaktualny",
-        "expression": "last(/Updates monitor Debian Ubuntu/updates.monitor.health.valid)=1 and last(/Updates monitor Debian Ubuntu/updates.monitor.health.scheduler_active)=1 and last(/Updates monitor Debian Ubuntu/updates.monitor.checked_at)>0 and now()-last(/Updates monitor Debian Ubuntu/updates.monitor.checked_at)>last(/Updates monitor Debian Ubuntu/updates.monitor.health.interval_seconds)+1200",
+        "expression": "last(/updates-monitor/updates.monitor.health.valid)=1 and last(/updates-monitor/updates.monitor.health.scheduler_active)=1 and last(/updates-monitor/updates.monitor.checked_at)>0 and now()-last(/updates-monitor/updates.monitor.checked_at)>last(/updates-monitor/updates.monitor.health.interval_seconds)+1200",
         "priority": "WARNING"
+      },
+      {
+        "uuid": "a7e8fc49f0a54b89a2e8d4a77b5e1076",
+        "name": "Wymagany restart systemu po aktualizacji",
+        "event_name": "Host {HOST.NAME} wymaga restartu po aktualizacji",
+        "expression": "last(/updates-monitor/updates.monitor.reboot_required)=1",
+        "recovery_mode": "RECOVERY_EXPRESSION",
+        "recovery_expression": "last(/updates-monitor/updates.monitor.reboot_required)=0",
+        "priority": "WARNING",
+        "description": "Zaplanuj restart zgodnie z procedurą hosta. Brak danych nie zamyka tego alarmu."
+      },
+      {
+        "uuid": "b778e8b8168c484ea8f5fe9ec76b3881",
+        "name": "Nie można ustalić, czy wymagany jest restart systemu",
+        "event_name": "Host {HOST.NAME}: nie można ustalić stanu restartu",
+        "expression": "last(/updates-monitor/updates.monitor.reboot_required)=2",
+        "priority": "WARNING",
+        "description": "Sprawdź harmonogram, wersję agenta i narzędzia systemowe."
       }
     ]
   }
