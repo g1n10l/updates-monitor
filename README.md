@@ -29,11 +29,11 @@ Checks use package repository metadata. Timely results require repository access
 
 ### Debian and Ubuntu
 
-Download the [DEB package, version 0.5.6-1](install/updates-monitor_0.5.6-1_all.deb). The downloaded file must be a DEB package, not a GitHub HTML page.
+Download the [DEB package, version 0.5.7-1](install/updates-monitor_0.5.7-1_all.deb). The downloaded file must be a DEB package, not a GitHub HTML page.
 
 ```sh
-curl -fL -o updates-monitor.deb https://raw.githubusercontent.com/g1n10l/updates-monitor/main/install/updates-monitor_0.5.6-1_all.deb
-echo 'ebde7671af06da0f62d494155788da3fe98f5239c546d8a7e187a9ac8c87d3d0  updates-monitor.deb' | sha256sum -c -
+curl -fL -o updates-monitor.deb https://raw.githubusercontent.com/g1n10l/updates-monitor/main/install/updates-monitor_0.5.7-1_all.deb
+echo 'febefaa206ca9ab7f444ead4453fe8ef29787c02b5a1cceced54412889f74501  updates-monitor.deb' | sha256sum -c -
 sudo dpkg -i updates-monitor.deb
 ```
 
@@ -49,12 +49,12 @@ sudo apt purge updates-monitor
 
 ### Red Hat family
 
-The [RPM package, version 0.5.6-1](install/updates-monitor-0.5.6-1.noarch.rpm), is experimental. It has not been verified on a running RHEL system and is unsigned.
+The [RPM package, version 0.5.7-1](install/updates-monitor-0.5.7-1.noarch.rpm), is experimental. It has not been verified on a running RHEL system and is unsigned.
 
 ```sh
-curl -fL -o updates-monitor-0.5.6-1.noarch.rpm https://raw.githubusercontent.com/g1n10l/updates-monitor/main/install/updates-monitor-0.5.6-1.noarch.rpm
-echo '6b53a61d81cb956add5f312a3d7976007dd95119dd4d3c33b338839523b85a4e  updates-monitor-0.5.6-1.noarch.rpm' | sha256sum -c -
-sudo dnf install updates-monitor-0.5.6-1.noarch.rpm
+curl -fL -o updates-monitor-0.5.7-1.noarch.rpm https://raw.githubusercontent.com/g1n10l/updates-monitor/main/install/updates-monitor-0.5.7-1.noarch.rpm
+echo 'ce8cd2d9515947c56fe08821763d3fd70c1b47213cee2c749357afc9c8698547  updates-monitor-0.5.7-1.noarch.rpm' | sha256sum -c -
+sudo dnf install updates-monitor-0.5.7-1.noarch.rpm
 ```
 
 To remove it, run `sudo dnf remove updates-monitor`. Configuration and schedule files may remain after removing the RPM.
@@ -134,7 +134,7 @@ done
 
 ## Restart required after updates
 
-The scheduler reports reboot status in `updates.monitor.reboot_required` through the existing health item. Zabbix raises a warning containing the host name when a restart is required, and closes it only after a confirmed clear result. The status is refreshed on each scheduler tick, normally once per minute, independently of the update scan interval. The agent and Zabbix polling add delay.
+The scheduler reports reboot status in `updates.monitor.reboot_required` through the existing health item. Zabbix raises a warning containing the host name when a restart is required and a valid scan shows zero regular, security and kernel updates. It closes the warning when reboot is no longer required or a valid scan finds pending updates; unknown data do not confirm recovery. The status is refreshed on each scheduler tick, normally once per minute, independently of the update scan interval. The agent and Zabbix polling add delay.
 
 On Debian and Ubuntu the check uses `/run/reboot-required`, which only reflects packages that create the marker. On RHEL-compatible systems it runs `dnf needs-restarting -r` from `dnf-plugins-core` as the scheduler user. A missing tool, unrecognized result, failed check or old agent reports status 2 (unknown), not a clear result. Monitoring covers host reboots; individual services may also require a restart. The alert does not restart a host.
 

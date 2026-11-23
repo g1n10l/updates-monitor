@@ -15,7 +15,7 @@
         "description": "Monitorowanie aktualizacji systemu przez updates-monitor i agenta Zabbix. Autor: G1n10L. Liczniki sumują wyniki kolejnych kontroli i zerują się, gdy w kategorii nie ma aktualizacji. Trzecia kategoria obejmuje wszystkie aktualizacje kernela.",
         "vendor": {
           "name": "G1n10L",
-          "version": "0.5.6"
+          "version": "0.5.7"
         },
         "groups": [
           {
@@ -445,11 +445,11 @@
         "uuid": "a7e8fc49f0a54b89a2e8d4a77b5e1076",
         "name": "Wymagany restart systemu po aktualizacji",
         "event_name": "Host {HOST.NAME} wymaga restartu po aktualizacji",
-        "expression": "last(/updates-monitor/updates.monitor.reboot_required)=1",
+        "expression": "last(/updates-monitor/updates.monitor.reboot_required)=1 and last(/updates-monitor/updates.monitor.valid)=1 and last(/updates-monitor/updates.monitor.regular)=0 and last(/updates-monitor/updates.monitor.security)=0 and last(/updates-monitor/updates.monitor.kernel_security)=0",
         "recovery_mode": "RECOVERY_EXPRESSION",
-        "recovery_expression": "last(/updates-monitor/updates.monitor.reboot_required)=0",
+        "recovery_expression": "last(/updates-monitor/updates.monitor.reboot_required)=0 or (last(/updates-monitor/updates.monitor.valid)=1 and (last(/updates-monitor/updates.monitor.regular)>0 or last(/updates-monitor/updates.monitor.security)>0 or last(/updates-monitor/updates.monitor.kernel_security)>0))",
         "priority": "WARNING",
-        "description": "Zaplanuj restart zgodnie z procedurą hosta. Brak danych nie zamyka tego alarmu."
+        "description": "Alarm pojawia się, gdy restart jest wymagany i wszystkie trzy liczniki aktualizacji wynoszą zero przy poprawnym wyniku kontroli. Nieznany stan restartu ani niepoprawny wynik kontroli nie potwierdzają zamknięcia problemu."
       },
       {
         "uuid": "b778e8b8168c484ea8f5fe9ec76b3881",

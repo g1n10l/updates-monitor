@@ -50,6 +50,11 @@ for value, expected in [({'valid': 1, 'reboot_required': 0}, '0'),
     assert actual == expected, (value, actual)
 trigger = next(t for t in data['triggers'] if t['name'] == 'Wymagany restart systemu po aktualizacji')
 assert '{HOST.NAME}' in trigger['event_name']
-assert trigger['recovery_expression'].endswith(')=0')
+assert 'updates.monitor.reboot_required)=1' in trigger['expression']
+assert 'updates.monitor.valid)=1' in trigger['expression']
+for category in ('regular', 'security', 'kernel_security'):
+    assert 'updates.monitor.' + category + ')=0' in trigger['expression']
+    assert 'updates.monitor.' + category + ')>0' in trigger['recovery_expression']
+assert 'updates.monitor.reboot_required)=0' in trigger['recovery_expression']
 assert (root / 'zabbix-updates-monitor.json').read_bytes() == (root.parent / 'template/updates-monitor.json').read_bytes()
 print('OK: reboot marker, DNF, błędy oraz szablon Zabbiksa')
