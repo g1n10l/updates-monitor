@@ -60,7 +60,7 @@ cron, a następnie wyłącza wcześniejsze timery updates-monitor.
 
 PAKIET DEB:
   python3 build-deb.py
-  sudo dpkg -i ./../install/updates-monitor_0.5.10-1_all.deb
+  sudo dpkg -i ./../install/updates-monitor_0.5.11-1_all.deb
 
 Jeśli dpkg zgłosi brakujące zależności, doinstaluj je poleceniem:
   sudo apt --fix-broken install
@@ -104,7 +104,10 @@ Interwały: 2h, 6h, 12h, 1D, 5D, 10D, 15D. Wartość przechowuje plik
 w danym uruchomieniu zapisuje /run/updates-monitor/last-attempt. Cron uruchamia mechanizm
 co minutę; rzeczywisty czas kontroli może mieć opóźnienie do minuty. Po
 restarcie zegar interwału jest zerowany i wykonywana jest kontrola po minucie.
-Zmiana interwału nie włącza wyłączonego harmonogramu.
+Polecenie sudo updates-monitor interval 0 wyłącza automatyczne kontrole.
+Ustawienie interwału, np. 6h, ponownie je włącza. Ręczne status nadal działa.
+Wersję pakietu sprawdzisz: dpkg-query -W updates-monitor (Debian/Ubuntu)
+lub rpm -q updates-monitor (RHEL).
 Podczas aktualizacji poprzednie wartości są zamieniane: 1h na 2h,
 15h na 12h, 1d na 1D, 3d na 5D, 8d na 10D; 6h pozostaje bez zmian.
 Wcześniej wyłączony harmonogram można ponownie włączyć ręcznie:

@@ -4,10 +4,10 @@ set -euo pipefail
 [[ $EUID == 0 ]] || { echo 'Uruchom: sudo bash install-deb.sh [ścieżka-do-pakietu.deb]' >&2; exit 1; }
 [[ $# -le 1 ]] || { echo 'Podaj najwyżej jedną ścieżkę do pakietu .deb.' >&2; exit 2; }
 cd "$(dirname "$(readlink -f "$0")")"
-if [[ -f ./updates-monitor_0.5.10-1_all.deb ]]; then
-    default_pkg=./updates-monitor_0.5.10-1_all.deb
+if [[ -f ./updates-monitor_0.5.11-1_all.deb ]]; then
+    default_pkg=./updates-monitor_0.5.11-1_all.deb
 else
-    default_pkg=../install/updates-monitor_0.5.10-1_all.deb
+    default_pkg=../install/updates-monitor_0.5.11-1_all.deb
 fi
 pkg=${1:-$default_pkg}
 pkg=$(readlink -f "$pkg")

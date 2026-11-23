@@ -88,8 +88,18 @@ PYCODE
     fi
     exit "$result"
 fi
-[[ $# == 2 && $1 == interval ]] || { echo 'Użycie: updates-monitor status | interval {2h|6h|12h|1D|5D|10D|15D}' >&2; exit 2; }
-case "$2" in 2h|6h|12h|1D|5D|10D|15D) ;; *) echo 'Nieobsługiwany interwał.' >&2; exit 2;; esac
-"$scheduler" interval "$2"
-systemctl start --no-block updates-monitor-scheduler.service
-echo "Interwał ustawiony: $2"
+[[ $# == 2 && $1 == interval ]] || { echo 'Użycie: updates-monitor status | interval {0|2h|6h|12h|1D|5D|10D|15D}' >&2; exit 2; }
+case "$2" in
+    0)
+        "$scheduler" enable 0
+        systemctl start --no-block updates-monitor-scheduler.service
+        echo 'Automatyczne sprawdzanie aktualizacji wyłączone.'
+        ;;
+    2h|6h|12h|1D|5D|10D|15D)
+        "$scheduler" interval "$2"
+        "$scheduler" enable 1
+        systemctl start --no-block updates-monitor-scheduler.service
+        echo "Automatyczne sprawdzanie włączone. Interwał: $2"
+        ;;
+    *) echo 'Nieobsługiwany interwał.' >&2; exit 2 ;;
+esac

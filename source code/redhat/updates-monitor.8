@@ -5,7 +5,7 @@ updates-monitor \- sprawdzanie aktualizacji DNF dla Zabbiksa
 .B sudo updates-monitor status
 .br
 .B sudo updates-monitor interval
-.RI { 2h | 6h | 12h | 1D | 5D | 10D | 15D }
+.RI { 0 | 2h | 6h | 12h | 1D | 5D | 10D | 15D }
 .SH OPIS
 Program zlicza aktualizacje regularne, bezpieczeństwa oraz bezpieczeństwa
 kernela. Wynik udostępnia agentowi Zabbix. Nie instaluje aktualizacji.
@@ -23,7 +23,7 @@ być liczony przy kolejnych kontrolach.
 Uruchamia kontrolę i pokazuje liczby pakietów, stan usługi i interwał.
 .TP
 .BI interval " wartość"
-Zmienia interwał na jedną z wartości podanych w składni.
+Wartość 0 wyłącza automatyczne kontrole; ustawienie interwału ponownie je włącza.
 .SH OGRANICZENIA
 DNF repoquery pokazuje kandydatów, a nie rozwiązaną transakcję.
 Rozpoznawanie aktualizacji bezpieczeństwa wymaga metadanych updateinfo

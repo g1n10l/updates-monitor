@@ -47,11 +47,11 @@ Checks use package repository metadata. Timely results require repository access
 
 ### Debian and Ubuntu
 
-Download the [DEB package, version 0.5.10-1](install/updates-monitor_0.5.10-1_all.deb). The downloaded file must be a DEB package, not a GitHub HTML page.
+Download the [DEB package, version 0.5.11-1](install/updates-monitor_0.5.11-1_all.deb). The downloaded file must be a DEB package, not a GitHub HTML page.
 
 ```sh
-curl -fL -o updates-monitor.deb https://raw.githubusercontent.com/g1n10l/updates-monitor/main/install/updates-monitor_0.5.10-1_all.deb
-echo 'db60865f644046f3ffb4ead9598ff4feb40ef166090e90c1580fc3e03fbe9b29  updates-monitor.deb' | sha256sum -c -
+curl -fL -o updates-monitor.deb https://raw.githubusercontent.com/g1n10l/updates-monitor/main/install/updates-monitor_0.5.11-1_all.deb
+echo '7be4cf1ccfcba6bdf5ec99ee1ab9ea5fa9b7bca17b957cdf7d219b5cbd1e2ccc  updates-monitor.deb' | sha256sum -c -
 sudo dpkg -i updates-monitor.deb
 ```
 
@@ -67,12 +67,12 @@ sudo apt purge updates-monitor
 
 ### Red Hat family
 
-The [RPM package, version 0.5.10-1](install/updates-monitor-0.5.10-1.noarch.rpm), is experimental. It has not been verified on a running RHEL system and is unsigned.
+The [RPM package, version 0.5.11-1](install/updates-monitor-0.5.11-1.noarch.rpm), is experimental. It has not been verified on a running RHEL system and is unsigned.
 
 ```sh
-curl -fL -o updates-monitor-0.5.10-1.noarch.rpm https://raw.githubusercontent.com/g1n10l/updates-monitor/main/install/updates-monitor-0.5.10-1.noarch.rpm
-echo 'c281bbd7276ad5b7b7f1d493abe31c52778fd28b9077f9cc7007fc2b4a57849f  updates-monitor-0.5.10-1.noarch.rpm' | sha256sum -c -
-sudo dnf install updates-monitor-0.5.10-1.noarch.rpm
+curl -fL -o updates-monitor-0.5.11-1.noarch.rpm https://raw.githubusercontent.com/g1n10l/updates-monitor/main/install/updates-monitor-0.5.11-1.noarch.rpm
+echo '259e7a7c6af4dfd9162b79b9aab8f298be656afc795381ae98866e02c4cb4a61  updates-monitor-0.5.11-1.noarch.rpm' | sha256sum -c -
+sudo dnf install updates-monitor-0.5.11-1.noarch.rpm
 ```
 
 To remove it, run `sudo dnf remove updates-monitor`. Configuration and schedule files may remain after removing the RPM.
@@ -85,6 +85,10 @@ sudo updates-monitor interval 6h
 sudo updates-monitor interval 1D
 man updates-monitor
 ```
+
+Check the installed package version with `dpkg-query -W updates-monitor` on Debian/Ubuntu or `rpm -q updates-monitor` on RHEL-compatible systems.
+
+Use `sudo updates-monitor interval 0` to disable automatic update scans. Setting an interval, for example `sudo updates-monitor interval 6h`, re-enables them. Manual `sudo updates-monitor status` still runs a scan; the disabled schedule is also reported in Zabbix.
 
 `status` runs a check even when the schedule is disabled. It shows cumulative scan counts, the time of the last successful check, the interval, and service status. If the service failed to start, it also shows recent errors from `journalctl`.
 
