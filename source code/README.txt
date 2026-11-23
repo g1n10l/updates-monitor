@@ -60,7 +60,7 @@ cron, a następnie wyłącza wcześniejsze timery updates-monitor.
 
 PAKIET DEB:
   python3 build-deb.py
-  sudo dpkg -i ./../install/updates-monitor_0.5.7-1_all.deb
+  sudo dpkg -i ./../install/updates-monitor_0.5.8-1_all.deb
 
 Jeśli dpkg zgłosi brakujące zależności, doinstaluj je poleceniem:
   sudo apt --fix-broken install

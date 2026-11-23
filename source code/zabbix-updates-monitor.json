@@ -15,7 +15,7 @@
         "description": "Monitorowanie aktualizacji systemu przez updates-monitor i agenta Zabbix. Autor: G1n10L. Liczniki sumują wyniki kolejnych kontroli i zerują się, gdy w kategorii nie ma aktualizacji. Trzecia kategoria obejmuje wszystkie aktualizacje kernela.",
         "vendor": {
           "name": "G1n10L",
-          "version": "0.5.7"
+          "version": "0.5.8"
         },
         "groups": [
           {
@@ -305,6 +305,31 @@
             "valuemap": {
               "name": "Stan restartu systemu"
             }
+          },
+          {
+            "uuid": "d90883234ed44de697919e2df2636091",
+            "name": "Kernel: nowszy obraz niż uruchomiony",
+            "type": "DEPENDENT",
+            "key": "updates.monitor.kernel_update_pending",
+            "delay": "0",
+            "history": "30d",
+            "trends": "365d",
+            "value_type": "UNSIGNED",
+            "description": "0: brak nowszego obrazu tej samej rodziny; 1: nowszy obraz; 2: nie można porównać. Obrazy w /boot mogą nie odpowiadać konfiguracji rozruchu.",
+            "preprocessing": [
+              {
+                "type": "JAVASCRIPT",
+                "parameters": [
+                  "var d = JSON.parse(value); return d.valid === 1 && (d.kernel_update_pending === 0 || d.kernel_update_pending === 1) ? d.kernel_update_pending : 2;"
+                ]
+              }
+            ],
+            "master_item": {
+              "key": "updates.monitor.health"
+            },
+            "valuemap": {
+              "name": "Stan restartu po aktualizacji kernela"
+            }
           }
         ],
         "valuemaps": [
@@ -359,6 +384,24 @@
               {
                 "value": "1",
                 "newvalue": "Wymagany restart"
+              },
+              {
+                "value": "2",
+                "newvalue": "Nieznany"
+              }
+            ]
+          },
+          {
+            "uuid": "276322a2d4ad4f6e9b9ec9b50318e193",
+            "name": "Stan restartu po aktualizacji kernela",
+            "mappings": [
+              {
+                "value": "0",
+                "newvalue": "Brak nowszego obrazu"
+              },
+              {
+                "value": "1",
+                "newvalue": "Nowszy kernel, zalecany restart"
               },
               {
                 "value": "2",
@@ -458,6 +501,16 @@
         "expression": "last(/updates-monitor/updates.monitor.reboot_required)=2",
         "priority": "WARNING",
         "description": "Sprawdź harmonogram, wersję agenta i narzędzia systemowe."
+      },
+      {
+        "uuid": "b88e5c0862bc4deea324c25cdfef7000",
+        "name": "Zaktualizowany kernel (zalecany restart)",
+        "event_name": "Host {HOST.NAME}: zaktualizowany kernel (zalecany restart)",
+        "expression": "last(/updates-monitor/updates.monitor.kernel_update_pending)=1 and last(/updates-monitor/updates.monitor.valid)=1 and last(/updates-monitor/updates.monitor.regular)=0 and last(/updates-monitor/updates.monitor.security)=0 and last(/updates-monitor/updates.monitor.kernel_security)=0",
+        "recovery_mode": "RECOVERY_EXPRESSION",
+        "recovery_expression": "last(/updates-monitor/updates.monitor.kernel_update_pending)=0 or (last(/updates-monitor/updates.monitor.valid)=1 and (last(/updates-monitor/updates.monitor.regular)>0 or last(/updates-monitor/updates.monitor.security)>0 or last(/updates-monitor/updates.monitor.kernel_security)>0))",
+        "priority": "WARNING",
+        "description": "W /boot wykryto nowszy obraz kernela tej samej rodziny niż uruchomiony. Zweryfikuj ustawienia bootloadera i zaplanuj restart. Brak danych nie potwierdza wczytania nowego kernela."
       }
     ]
   }

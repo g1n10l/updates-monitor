@@ -39,11 +39,11 @@ Checks use package repository metadata. Timely results require repository access
 
 ### Debian and Ubuntu
 
-Download the [DEB package, version 0.5.7-1](install/updates-monitor_0.5.7-1_all.deb). The downloaded file must be a DEB package, not a GitHub HTML page.
+Download the [DEB package, version 0.5.8-1](install/updates-monitor_0.5.8-1_all.deb). The downloaded file must be a DEB package, not a GitHub HTML page.
 
 ```sh
-curl -fL -o updates-monitor.deb https://raw.githubusercontent.com/g1n10l/updates-monitor/main/install/updates-monitor_0.5.7-1_all.deb
-echo 'febefaa206ca9ab7f444ead4453fe8ef29787c02b5a1cceced54412889f74501  updates-monitor.deb' | sha256sum -c -
+curl -fL -o updates-monitor.deb https://raw.githubusercontent.com/g1n10l/updates-monitor/main/install/updates-monitor_0.5.8-1_all.deb
+echo '671b770cee64739a72c5db55409382e2e85fd0bb103e01e55482bfdda5d81237  updates-monitor.deb' | sha256sum -c -
 sudo dpkg -i updates-monitor.deb
 ```
 
@@ -59,12 +59,12 @@ sudo apt purge updates-monitor
 
 ### Red Hat family
 
-The [RPM package, version 0.5.7-1](install/updates-monitor-0.5.7-1.noarch.rpm), is experimental. It has not been verified on a running RHEL system and is unsigned.
+The [RPM package, version 0.5.8-1](install/updates-monitor-0.5.8-1.noarch.rpm), is experimental. It has not been verified on a running RHEL system and is unsigned.
 
 ```sh
-curl -fL -o updates-monitor-0.5.7-1.noarch.rpm https://raw.githubusercontent.com/g1n10l/updates-monitor/main/install/updates-monitor-0.5.7-1.noarch.rpm
-echo 'ce8cd2d9515947c56fe08821763d3fd70c1b47213cee2c749357afc9c8698547  updates-monitor-0.5.7-1.noarch.rpm' | sha256sum -c -
-sudo dnf install updates-monitor-0.5.7-1.noarch.rpm
+curl -fL -o updates-monitor-0.5.8-1.noarch.rpm https://raw.githubusercontent.com/g1n10l/updates-monitor/main/install/updates-monitor-0.5.8-1.noarch.rpm
+echo 'd79de81e3e0773f554fe9f7c244c314bb78bc8299ef5853a727201b48b7d94bb  updates-monitor-0.5.8-1.noarch.rpm' | sha256sum -c -
+sudo dnf install updates-monitor-0.5.8-1.noarch.rpm
 ```
 
 To remove it, run `sudo dnf remove updates-monitor`. Configuration and schedule files may remain after removing the RPM.
@@ -141,3 +141,9 @@ for test in "source code"/tests/test_*.py; do
     python3 "$test" || exit 1
 done
 ```
+
+## New kernel restart recommendation
+
+The Zabbix item `updates.monitor.kernel_update_pending` compares the running kernel version with kernel images of the same flavour or architecture in `/boot`. A newer image yields 1; no newer image yields 0; an unsupported version format, missing images or comparison error yields 2 (unknown). The warning names the host when the value is 1 and a valid update scan shows all three update categories at zero. It resolves after the running kernel is no older than the matching images or when a valid scan finds pending updates. An unknown result alone does not close it.
+
+This is a recommendation based on files in `/boot`, not proof that the bootloader is configured to load the newer image. Retained or manually installed images can influence the result. It is independent of the system reboot-required marker and may appear alongside the general reboot warning. A separate boot partition must be mounted for the check. The scheduler refreshes the result on each tick, normally once per minute.

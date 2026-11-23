@@ -10,7 +10,7 @@ with tempfile.TemporaryDirectory() as tmp:
     path = Path(tmp)
     source = (root / 'install-deb.sh').read_text().replace('[[ $EUID == 0 ]]', '[[ 1 == 1 ]]')
     (path / 'install-deb.sh').write_text(source)
-    (path / 'updates-monitor_0.5.7-1_all.deb').write_text('test package')
+    (path / 'updates-monitor_0.5.8-1_all.deb').write_text('test package')
     dpkg = path / 'dpkg-query'
     dpkg.write_text('#!/bin/bash\n[[ ${TEST_INSTALLED:-0} == 1 ]] && printf installed\n')
     apt = path / 'apt-get'

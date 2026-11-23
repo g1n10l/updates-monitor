@@ -35,6 +35,30 @@ with tempfile.TemporaryDirectory() as tmp:
     with patch.object(scheduler.subprocess, 'run', side_effect=subprocess.TimeoutExpired('dnf', 45)):
         assert scheduler.reboot_required() == 2
 
+with tempfile.TemporaryDirectory() as tmp:
+    scheduler.BOOT_DIR = Path(tmp)
+    kernel = lambda: SimpleNamespace(release='6.8.0-40-generic')
+    def version_sort(args, **kw):
+        import re
+        values = kw['input'].splitlines()
+        def key(v):
+            return [int(part) if part.isdigit() else part for part in re.split(r'(\d+)', v)]
+        return SimpleNamespace(stdout='\n'.join(sorted(values, key=key)) + '\n')
+    with patch.object(scheduler.os, 'uname', kernel), patch.object(scheduler.subprocess, 'run', side_effect=version_sort):
+        assert scheduler.kernel_update_pending() == 2
+        (scheduler.BOOT_DIR / 'vmlinuz-6.8.0-40-generic').touch()
+        assert scheduler.kernel_update_pending() == 0
+        (scheduler.BOOT_DIR / 'vmlinuz-6.8.0-42-lowlatency').touch()
+        assert scheduler.kernel_update_pending() == 0
+        (scheduler.BOOT_DIR / 'vmlinuz-6.8.0-41-generic').touch()
+        assert scheduler.kernel_update_pending() == 1
+    rpm_running = lambda: SimpleNamespace(release='5.14.0-427.13.1.el9_4.x86_64')
+    (scheduler.BOOT_DIR / 'vmlinuz-5.14.0-427.22.1.el9_4.x86_64').touch()
+    with patch.object(scheduler.os, 'uname', rpm_running), patch.object(scheduler.subprocess, 'run', side_effect=version_sort):
+        assert scheduler.kernel_update_pending() == 1
+    with patch.object(scheduler.os, 'uname', lambda: SimpleNamespace(release='unsupported')):
+        assert scheduler.kernel_update_pending() == 2
+
 data = json.loads((root / 'zabbix-updates-monitor.json').read_text())['zabbix_export']
 items = {i['key']: i for i in data['templates'][0]['items']}
 item = items['updates.monitor.reboot_required']
@@ -58,3 +82,13 @@ for category in ('regular', 'security', 'kernel_security'):
 assert 'updates.monitor.reboot_required)=0' in trigger['recovery_expression']
 assert (root / 'zabbix-updates-monitor.json').read_bytes() == (root.parent / 'template/updates-monitor.json').read_bytes()
 print('OK: reboot marker, DNF, błędy oraz szablon Zabbiksa')
+
+kernel_item = items['updates.monitor.kernel_update_pending']
+assert kernel_item['master_item']['key'] == 'updates.monitor.health'
+kernel_trigger = next(t for t in data['triggers'] if t['name'] == 'Zaktualizowany kernel (zalecany restart)')
+assert '{HOST.NAME}' in kernel_trigger['event_name']
+for category in ('regular', 'security', 'kernel_security'):
+    assert 'updates.monitor.' + category + ')=0' in kernel_trigger['expression']
+assert 'updates.monitor.valid)=1' in kernel_trigger['expression']
+assert 'updates.monitor.kernel_update_pending)=1' in kernel_trigger['expression']
+assert 'updates.monitor.kernel_update_pending)=0' in kernel_trigger['recovery_expression']

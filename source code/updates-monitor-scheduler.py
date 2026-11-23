@@ -19,6 +19,7 @@ CRON_FILE = Path('/etc/cron.d/updates-monitor')
 DPKG_STATUS = Path('/var/lib/dpkg/status')
 REBOOT_MARKER = Path('/run/reboot-required')
 DNF = Path('/usr/bin/dnf')
+BOOT_DIR = Path('/boot')
 DPKG_LOCKS = (Path('/var/lib/dpkg/lock-frontend'), Path('/var/lib/dpkg/lock'))
 DPKG_SEEN = RUNTIME / 'dpkg-status-signature'
 INTERVALS = {'2h': 7200, '6h': 21600, '12h': 43200, '1D': 86400, '5D': 432000, '10D': 864000, '15D': 1296000}
@@ -110,6 +111,42 @@ def reboot_required():
     return 2
 
 
+def kernel_update_pending():
+    """Compare running kernel with boot images of the same flavour and architecture.
+
+    0: no newer matching image, 1: newer image, 2: comparison unavailable.
+    The boot images may include manually installed or retained kernels; this is
+    a recommendation, not a guarantee that the bootloader will select one.
+    """
+    try:
+        running = os.uname().release
+        match = re.fullmatch(r'\d+(?:\.\d+)+-\d+(-[a-zA-Z][a-zA-Z0-9_-]*)', running)
+        if match:
+            suffix = match.group(1)
+            family = lambda version: bool(re.fullmatch(r'\d+(?:\.\d+)+-\d+' + re.escape(suffix), version))
+        else:
+            match = re.fullmatch(r'\d+(?:\.\d+)+-\d+[a-zA-Z0-9_.+-]*\.(x86_64|aarch64|ppc64le|s390x)', running)
+            if not match:
+                return 2
+            suffix = '.' + match.group(1)
+            family = lambda version: version.endswith(suffix) and bool(re.fullmatch(r'\d[0-9a-zA-Z_.+-]*', version))
+        images = [p.name[len('vmlinuz-'):] for p in BOOT_DIR.glob('vmlinuz-*') if p.is_file()]
+        images = [v for v in images if family(v)]
+        if not images:
+            return 2
+        versions = sorted(set(images + [running]))
+        ordered = subprocess.run(['/usr/bin/sort', '-V'], input='\n'.join(versions) + '\n',
+                                 stdout=subprocess.PIPE, stderr=subprocess.PIPE,
+                                 universal_newlines=True, check=True, timeout=10,
+                                 env=dict(os.environ, LC_ALL='C')).stdout.splitlines()
+        if len(ordered) != len(versions) or set(ordered) != set(versions):
+            return 2
+        return int(ordered[-1] != running)
+    except (OSError, ValueError, subprocess.SubprocessError) as exc:
+        print('Nie można porównać wersji kernela:', exc, file=sys.stderr)
+        return 2
+
+
 def health(data):
     cron = command('is-active', '--quiet', 'cron.service', check=False).returncode == 0
     unit = command('show', 'updates-monitor.service', '--property=ActiveState', '--value').stdout.strip()
@@ -122,7 +159,7 @@ def health(data):
     return {'valid': 1, 'scheduler_active': int(data['enabled'] and cron and cron_configured),
             'service_state': states[unit], 'service_failed': int(unit == 'failed'),
             'interval_seconds': INTERVALS[data['interval']], 'updated_at': int(time.time()),
-            'reboot_required': reboot_required()}
+            'reboot_required': reboot_required(), 'kernel_update_pending': kernel_update_pending()}
 
 
 def dpkg_snapshot():
@@ -185,7 +222,7 @@ def tick():
             print('Błąd harmonogramu:', exc, file=sys.stderr)
             atomic(HEALTH, json.dumps({'valid': 0, 'scheduler_active': 0, 'service_state': 0,
                                       'service_failed': 0, 'interval_seconds': 0,
-                                      'updated_at': int(time.time()), 'reboot_required': 2}, separators=(',', ':')))
+                                      'updated_at': int(time.time()), 'reboot_required': 2, 'kernel_update_pending': 2}, separators=(',', ':')))
             raise SystemExit(1)
 
 
