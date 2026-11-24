@@ -33,10 +33,25 @@ def command(*args, check=True):
                           stderr=subprocess.PIPE, timeout=20, check=check)
 
 
+def restore_context(path):
+    """Label runtime files when SELinux tools are available.
+
+    A permissive selinuxfs can remain mounted after SELinux packages are removed.
+    Missing tools must not prevent monitoring in that state.
+    """
+    enforce = Path('/sys/fs/selinux/enforce')
+    tool = Path('/usr/sbin/restorecon')
+    if not enforce.exists():
+        return
+    if not tool.exists() and enforce.read_text().strip() == '0':
+        return
+    subprocess.run([str(tool), str(path)], check=True)
+
+
 def atomic(path, content, mode=0o644):
     path.parent.mkdir(mode=0o755, parents=True, exist_ok=True)
-    if path.parent == RUNTIME and Path('/sys/fs/selinux/enforce').exists():
-        subprocess.run(['/usr/sbin/restorecon', str(path.parent)], check=True)
+    if path.parent == RUNTIME:
+        restore_context(path.parent)
     fd, tmp = tempfile.mkstemp(prefix='.updates-', dir=path.parent)
     try:
         with os.fdopen(fd, 'w', encoding='utf-8') as out:
@@ -44,8 +59,8 @@ def atomic(path, content, mode=0o644):
             out.write('\n')
         os.chmod(tmp, mode)
         os.replace(tmp, path)
-        if path.parent == RUNTIME and Path('/sys/fs/selinux/enforce').exists():
-            subprocess.run(['/usr/sbin/restorecon', str(path)], check=True)
+        if path.parent == RUNTIME:
+            restore_context(path)
     finally:
         if os.path.exists(tmp):
             os.unlink(tmp)

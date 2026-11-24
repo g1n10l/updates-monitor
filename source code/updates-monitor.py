@@ -17,10 +17,24 @@ COUNT_KEYS = ('regular', 'security', 'kernel_security')
 KERNEL = re.compile(r'^linux-(image|headers|modules|modules-extra|signed-image|unsigned|tools|cloud-tools|kbuild|libc-dev|generic|virtual|aws|azure|gcp|kvm|oem|raspi|lowlatency|hwe)(-|$)')
 
 
+def restore_context(path):
+    """Label runtime files when SELinux tools are available.
+
+    A permissive selinuxfs can remain mounted after SELinux packages are removed.
+    Missing tools must not prevent monitoring in that state.
+    """
+    enforce = Path('/sys/fs/selinux/enforce')
+    tool = Path('/usr/sbin/restorecon')
+    if not enforce.exists():
+        return
+    if not tool.exists() and enforce.read_text().strip() == '0':
+        return
+    subprocess.run([str(tool), str(path)], check=True)
+
+
 def write_state(value):
     STATE.parent.mkdir(mode=0o755, parents=True, exist_ok=True)
-    if Path('/sys/fs/selinux/enforce').exists():
-        subprocess.run(['/usr/sbin/restorecon', str(STATE.parent)], check=True)
+    restore_context(STATE.parent)
     fd, tmp = tempfile.mkstemp(prefix='.state-', dir=STATE.parent)
     try:
         with os.fdopen(fd, 'w', encoding='utf-8') as out:
@@ -28,8 +42,7 @@ def write_state(value):
             out.write('\n')
         os.chmod(tmp, 0o644)
         os.replace(tmp, STATE)
-        if Path('/sys/fs/selinux/enforce').exists():
-            subprocess.run(['/usr/sbin/restorecon', str(STATE)], check=True)
+        restore_context(STATE)
     finally:
         if os.path.exists(tmp):
             os.unlink(tmp)

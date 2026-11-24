@@ -11,8 +11,16 @@ for c in /etc/zabbix/zabbix_agentd.conf /etc/zabbix/zabbix_agent2.conf; do [[ ! 
 if ((${#configs[@]} == 0)); then
     echo 'Nie znaleziono agenta Zabbix. Monitoring przez Zabbix nie będzie dostępny do czasu jego instalacji i konfiguracji.' >&2
 fi
+selinux_tools=0
 if [[ -e /sys/fs/selinux/enforce ]]; then
-    command -v semanage >/dev/null && command -v restorecon >/dev/null || { echo 'SELinux wymaga semanage i restorecon.' >&2; exit 1; }
+    if command -v semanage >/dev/null && command -v restorecon >/dev/null; then
+        selinux_tools=1
+    elif [[ $(cat /sys/fs/selinux/enforce) == 1 ]]; then
+        echo 'SELinux enforcing wymaga semanage i restorecon.' >&2
+        exit 1
+    else
+        echo 'SELinux permissive bez narzędzi; pomijam konfigurację etykiet.' >&2
+    fi
 fi
 missing=()
 if ! /usr/bin/python3 -c 'import apt' 2>/dev/null; then missing+=(python3-apt); fi
@@ -35,7 +43,7 @@ rm -f /etc/systemd/system/updates-monitor.timer /etc/systemd/system/updates-moni
 rmdir /etc/systemd/system/updates-monitor.timer.d 2>/dev/null || true
 install -d -m 0755 /usr/local/share/man/man8
 install -m 0644 updates-monitor.8 /usr/local/share/man/man8/updates-monitor.8
-if [[ -e /sys/fs/selinux/enforce ]]; then
+if [[ $selinux_tools == 1 ]]; then
     if ((${#configs[@]})); then
         if semanage fcontext -l -C | grep -F '/run/updates-monitor(/.*)?' >/dev/null; then
             semanage fcontext -m -t zabbix_runtime_t '/run/updates-monitor(/.*)?'

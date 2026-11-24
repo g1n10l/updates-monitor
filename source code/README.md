@@ -7,7 +7,7 @@ Monitor Linux package updates with Zabbix. The tool reports cumulative scan coun
 
 ## Platforms and packages
 
-- **Debian and Ubuntu:** APT, systemd and cron. Install the [DEB package](../install/updates-monitor_0.5.13-1_all.deb). The optional RUN installer can be built with [build-installer.py](build-installer.py).
+- **Debian and Ubuntu:** APT, systemd and cron. Install the [DEB package](../install/updates-monitor_0.5.13-2_all.deb). The optional RUN installer can be built with [build-installer.py](build-installer.py).
 - **RHEL 8/9 and compatible systems:** an [RPM package](../install/updates-monitor-0.5.13-1.noarch.rpm) using DNF 4 and crond is provided as an experimental build. Its classification has been tested with simulated data, but installation and operation on a live RHEL system have not yet been verified. The RPM is unsigned. See the [Red Hat build notes](redhat/README.txt).
 
 The installers do not install a Zabbix agent or add a Zabbix repository. They configure an existing Zabbix agent or agent 2; set `Server` and, if applicable, `ServerActive` in the agent configuration separately. The RUN installer does not currently include an uninstaller.
@@ -19,10 +19,12 @@ The installers do not install a Zabbix agent or add a Zabbix repository. They co
 On Debian, Ubuntu and compatible systems, install the downloaded DEB package:
 
 ```sh
-curl -fL -o updates-monitor.deb https://raw.githubusercontent.com/g1n10l/updates-monitor/main/install/updates-monitor_0.5.13-1_all.deb
-echo '98b54ba8cdee04d80c1880ff8d7c523c6805828eae8953f338df58f7177ded2d  updates-monitor.deb' | sha256sum -c -
+curl -fL -o updates-monitor.deb https://raw.githubusercontent.com/g1n10l/updates-monitor/main/install/updates-monitor_0.5.13-2_all.deb
+echo 'f82cb1b4276ec5d82f1b5408e999c7d51f11c86a772072f39a3e8f2164dedc7a  updates-monitor.deb' | sha256sum -c -
 sudo dpkg -i updates-monitor.deb
 ```
+
+Debian revision `0.5.13-2` fixes installation and result writes after SELinux tools have been removed while the kernel remains in permissive mode. Systems without SELinux need no SELinux tools. With SELinux enabled and its tools present, runtime labeling remains supported. Enforcing mode requires `semanage` and `restorecon`; the installer reports missing tools rather than disabling enforcement. The package was installed and checked on Debian 13 hosts with SELinux enforcing, permissive and disabled. Automated regression tests cover these variants. Ubuntu installation has not been tested.
 
 The download link points directly to the DEB file in the public repository. Proceed with installation only if the checksum reports `OK`. If `dpkg` reports missing dependencies, install them with `sudo apt --fix-broken install`.
 

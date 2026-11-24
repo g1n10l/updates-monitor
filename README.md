@@ -47,13 +47,15 @@ Checks use package repository metadata. Timely results require repository access
 
 ### Debian and Ubuntu
 
-Download the [DEB package, version 0.5.13-1](install/updates-monitor_0.5.13-1_all.deb). The downloaded file must be a DEB package, not a GitHub HTML page.
+Download the [DEB package, version 0.5.13-2](install/updates-monitor_0.5.13-2_all.deb). The downloaded file must be a DEB package, not a GitHub HTML page.
 
 ```sh
-curl -fL -o updates-monitor.deb https://raw.githubusercontent.com/g1n10l/updates-monitor/main/install/updates-monitor_0.5.13-1_all.deb
-echo '98b54ba8cdee04d80c1880ff8d7c523c6805828eae8953f338df58f7177ded2d  updates-monitor.deb' | sha256sum -c -
+curl -fL -o updates-monitor.deb https://raw.githubusercontent.com/g1n10l/updates-monitor/main/install/updates-monitor_0.5.13-2_all.deb
+echo 'f82cb1b4276ec5d82f1b5408e999c7d51f11c86a772072f39a3e8f2164dedc7a  updates-monitor.deb' | sha256sum -c -
 sudo dpkg -i updates-monitor.deb
 ```
+
+Debian revision `0.5.13-2` fixes installation and result writes after SELinux tools have been removed while the kernel remains in permissive mode. Systems without SELinux need no SELinux tools. With SELinux enabled and its tools present, runtime labeling remains supported. Enforcing mode requires `semanage` and `restorecon`; the installer reports missing tools rather than disabling enforcement. The package was installed and checked on Debian 13 hosts with SELinux enforcing, permissive and disabled. Automated regression tests cover these variants. Ubuntu installation has not been tested.
 
 The package depends on `python3`, `python3-apt`, `apt`, `systemd`, `util-linux`, and `cron`. If `dpkg` reports missing dependencies, run `sudo apt --fix-broken install`.
 

@@ -7,7 +7,7 @@ from pathlib import Path
 import tarfile
 
 ROOT = Path(__file__).resolve().parent
-PACKAGE = 'updates-monitor_0.5.13-1_all.deb'
+PACKAGE = 'updates-monitor_0.5.13-2_all.deb'
 
 
 def compressed(data):
@@ -87,8 +87,12 @@ def build():
     bundle = out.parent / 'updates-monitor-deb-installer.tar.gz'
     bundle.write_bytes(tar_bytes({PACKAGE: (package, 0o644),
                                   'install-deb.sh': (read('install-deb.sh'), 0o755)}))
+    versioned_bundle = out.parent / 'updates-monitor-0.5.13-2-deb-installer.tar.gz'
+    versioned_bundle.write_bytes(bundle.read_bytes())
     bundle_hash = hashlib.sha256(bundle.read_bytes()).hexdigest()
     (out.parent / (bundle.name + '.sha256')).write_text(f'{bundle_hash}  {bundle.name}\n', encoding='ascii')
+    (versioned_bundle.parent / (versioned_bundle.name + '.sha256')).write_text(
+        f'{bundle_hash}  {versioned_bundle.name}\n', encoding='ascii')
     print(f'Pakiet: {out}\nSHA-256: {sha}')
 
 

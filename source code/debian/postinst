@@ -12,10 +12,18 @@ fi
 if [ ! -e /etc/zabbix/updates-monitor/agent.conf ]; then
     install -Dm644 /usr/share/updates-monitor/agent.conf /etc/zabbix/updates-monitor/agent.conf
 fi
+selinux_tools=0
 if [ -e /sys/fs/selinux/enforce ]; then
-    command -v semanage >/dev/null && command -v restorecon >/dev/null || {
-        echo 'SELinux wymaga narzędzi semanage i restorecon.' >&2; exit 1;
-    }
+    if command -v semanage >/dev/null && command -v restorecon >/dev/null; then
+        selinux_tools=1
+    elif [ "$(cat /sys/fs/selinux/enforce)" = 1 ]; then
+        echo 'SELinux enforcing wymaga narzędzi semanage i restorecon.' >&2
+        exit 1
+    else
+        echo 'SELinux permissive bez narzędzi; pomijam konfigurację etykiet.' >&2
+    fi
+fi
+if [ "$selinux_tools" -eq 1 ]; then
     if [ "$found" -eq 1 ]; then
         if semanage fcontext -l -C | grep -F '/run/updates-monitor(/.*)?' >/dev/null; then
             semanage fcontext -m -t zabbix_runtime_t '/run/updates-monitor(/.*)?'
