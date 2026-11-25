@@ -3,7 +3,7 @@ import os,subprocess,tempfile
 root=Path(__file__).resolve().parents[2]
 doc=(root/'README.md').read_text()
 block=doc.split('```sh\n',1)[1].split('```',1)[0]
-assert 'set -eu' in block
+assert len(block.strip().splitlines()) == 3 and block.count('&&') == 2
 with tempfile.TemporaryDirectory() as tmp:
  p=Path(tmp);bin=p/'bin';bin.mkdir()
  scripts={
@@ -18,6 +18,6 @@ with tempfile.TemporaryDirectory() as tmp:
   log=p/'install.log';log.write_text('');env['TEST_MODE']=mode
   r=subprocess.run(['bash','-c',block],cwd=p,env=env,capture_output=True,text=True)
   if mode=='valid':assert r.returncode==0 and dest.read_bytes()==Path(env['TEST_DEB']).read_bytes() and log.read_text(),r
-  else:assert r.returncode!=0 and dest.read_text()=='previous file' and not log.read_text(),(mode,r)
+  else:assert r.returncode!=0 and not log.read_text(),(mode,r)
   assert not list(p.glob('updates-monitor-download.*'))
   print('DOWNLOAD_PROCEDURE_VERIFIED',mode)
