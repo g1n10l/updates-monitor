@@ -1,8 +1,10 @@
 #!/bin/bash
 set -euo pipefail
 [[ $EUID == 0 ]] || { echo 'Wymagane uprawnienia root.' >&2; exit 1; }
+version='0.5.17-2'
 scheduler=/usr/local/lib/updates-monitor/scheduler.py
 if [[ $# == 1 && $1 == status ]]; then
+    printf 'UPDATES MONITOR %s  %s\n' "$version" "$(hostname)"
     echo 'Trwa sprawdzanie aktualizacji...'
     result=0
     service_failed=0
@@ -46,13 +48,27 @@ try:
 except (OSError, ValueError, KeyError, TypeError, OverflowError) as exc:
     print('Nie można odczytać wyniku:', exc, file=sys.stderr)
     sys.exit(1)
-print('\nUPDATES MONITOR  ' + socket.gethostname())
+print('\nPODSUMOWANIE')
 print('-----------------------------------------------')
 print('Ostatnia kontrola: ' + checked)
 print('Wynik kontroli:    ' + ('poprawny' if valid else 'nieaktualny'))
-print('\nAKTUALIZACJE - SUMY KONTROLI')
+print('\nPAKIETY DO ZAINSTALOWANIA')
 for label, count in zip(('Regularne', 'Bezpieczeństwa', 'Kernel'), counts):
     print('  {:20} {}'.format(label + ':', count))
+print('\nDYSTRYBUCJA / DIST-UPGRADE')
+print('  Obecna:    ' + (data.get('dist_upgrade_current') or 'nieznana'))
+dist = data.get('dist_upgrade_available', 2)
+if not valid:
+    print('  Stan:      wynik nieaktualny')
+elif dist == 1:
+    print('  Stan:      dostępna aktualizacja dystrybucji')
+    print('  Docelowa:  ' + data.get('dist_upgrade_target', 'nieznana'))
+elif dist == 0:
+    print('  Stan:      brak nowszego wydania')
+else:
+    print('  Stan:      nieznany')
+    if data.get('dist_upgrade_error'):
+        print('  Powód:     ' + data['dist_upgrade_error'])
 values = [reboot.get('reboot_required'), reboot.get('kernel_update_pending')]
 print('\nRESTART')
 if 1 in values:

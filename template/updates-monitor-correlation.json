@@ -1,0 +1,32 @@
+{
+  "name": "updates-monitor: replace previous package count",
+  "description": "Close only the previous updates-monitor package-count problem for the same host and category when a changed positive count creates a new problem. Count items discard unchanged values.",
+  "status": 0,
+  "filter": {
+    "evaltype": 1,
+    "conditions": [
+      {
+        "type": 4,
+        "tag": "updates-monitor.component",
+        "operator": 0,
+        "value": "package-count"
+      },
+      {
+        "type": 5,
+        "tag": "updates-monitor.component",
+        "operator": 0,
+        "value": "package-count"
+      },
+      {
+        "type": 3,
+        "oldtag": "updates-monitor.scope",
+        "newtag": "updates-monitor.scope"
+      }
+    ]
+  },
+  "operations": [
+    {
+      "type": 0
+    }
+  ]
+}

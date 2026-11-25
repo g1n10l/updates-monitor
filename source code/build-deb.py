@@ -7,7 +7,7 @@ from pathlib import Path
 import tarfile
 
 ROOT = Path(__file__).resolve().parent
-PACKAGE = 'updates-monitor_0.5.13-2_all.deb'
+PACKAGE = 'updates-monitor_0.5.17-2_all.deb'
 
 
 def compressed(data):
@@ -64,6 +64,8 @@ def build():
         'etc/cron.d/updates-monitor': (read('updates-monitor.cron'), 0o644),
         'usr/share/man/man8/updates-monitor.8.gz': (compressed(read('updates-monitor.8')), 0o644),
         'usr/share/updates-monitor/zabbix-updates-monitor.json': (read('zabbix-updates-monitor.json'), 0o644),
+        'usr/share/updates-monitor/setup-zabbix-correlation.py': (read('setup-zabbix-correlation.py'), 0o755),
+        'usr/share/updates-monitor/zabbix-updates-monitor-correlation.json': (read('zabbix-updates-monitor-correlation.json'), 0o644),
         'usr/share/updates-monitor/agent.conf': (read('debian/agent.conf'), 0o644),
         'usr/share/doc/updates-monitor/README.txt': (read('README.txt'), 0o644),
         'etc/zabbix/updates-monitor/agent.conf': (read('debian/agent.conf'), 0o644),
@@ -87,7 +89,7 @@ def build():
     bundle = out.parent / 'updates-monitor-deb-installer.tar.gz'
     bundle.write_bytes(tar_bytes({PACKAGE: (package, 0o644),
                                   'install-deb.sh': (read('install-deb.sh'), 0o755)}))
-    versioned_bundle = out.parent / 'updates-monitor-0.5.13-2-deb-installer.tar.gz'
+    versioned_bundle = out.parent / 'updates-monitor-0.5.17-2-deb-installer.tar.gz'
     versioned_bundle.write_bytes(bundle.read_bytes())
     bundle_hash = hashlib.sha256(bundle.read_bytes()).hexdigest()
     (out.parent / (bundle.name + '.sha256')).write_text(f'{bundle_hash}  {bundle.name}\n', encoding='ascii')

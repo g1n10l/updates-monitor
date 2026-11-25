@@ -1,6 +1,6 @@
 Name:           updates-monitor
-Version:        0.5.13
-Release:        1%{?dist}
+Version:        0.5.17
+Release:        2%{?dist}
 Summary:        Monitor DNF updates for Zabbix
 License:        Proprietary
 URL:            https://github.com/g1n10l/updates-monitor
@@ -9,7 +9,7 @@ Source0:        updates-monitor-rpm.tar.gz
 Requires:       python3, dnf, dnf-plugins-core, cronie, systemd, util-linux, policycoreutils, policycoreutils-python-utils
 
 %description
-Monitor cumulative regular, security and kernel update checks using DNF.
+Monitor current regular, security and kernel update candidates using DNF.
 
 %prep
 %setup -q -c -T
@@ -27,6 +27,8 @@ install -Dm644 agent.conf %{buildroot}%{_sysconfdir}/zabbix/updates-monitor/agen
 install -Dm644 agent.conf %{buildroot}%{_datadir}/updates-monitor/agent.conf
 install -Dm644 updates-monitor.8 %{buildroot}%{_mandir}/man8/updates-monitor.8
 install -Dm644 zabbix-updates-monitor.json %{buildroot}%{_datadir}/updates-monitor/zabbix-updates-monitor.json
+install -Dm644 zabbix-updates-monitor-correlation.json %{buildroot}%{_datadir}/updates-monitor/zabbix-updates-monitor-correlation.json
+install -Dm755 setup-zabbix-correlation.py %{buildroot}%{_datadir}/updates-monitor/setup-zabbix-correlation.py
 install -Dm644 README.txt %{buildroot}%{_docdir}/updates-monitor/README-redhat.txt
 
 %post
@@ -89,5 +91,7 @@ fi
 %config(noreplace) %{_sysconfdir}/zabbix/updates-monitor/agent.conf
 %{_mandir}/man8/updates-monitor.8*
 %{_datadir}/updates-monitor/zabbix-updates-monitor.json
+%{_datadir}/updates-monitor/zabbix-updates-monitor-correlation.json
+%{_datadir}/updates-monitor/setup-zabbix-correlation.py
 %{_datadir}/updates-monitor/agent.conf
 %doc %{_docdir}/updates-monitor/README-redhat.txt

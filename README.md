@@ -1,6 +1,6 @@
 # updates-monitor
 
-`updates-monitor` checks for available system updates and sends cumulative scan counts to Zabbix. It does not install or remove packages.
+`updates-monitor` checks for available system updates and sends current pending package counts to Zabbix. It does not install or remove packages.
 
 ## What it monitors
 
@@ -8,15 +8,15 @@ The results are split into three categories:
 
 | Category | Zabbix alert |
 | --- | --- |
-| Regular updates | Blue alert showing the cumulative count |
-| Security updates | Yellow alert showing the cumulative count |
-| Kernel updates | Red alert showing the cumulative count |
+| Regular updates | Blue alert showing the current count |
+| Security updates | Yellow alert showing the current count |
+| Kernel updates | Red alert showing the current count |
 
 **Restart notification:** Zabbix shows a warning naming the host when it requires a restart and a successful update check reports `0` regular, security, and kernel updates. See [Restart required after updates](#restart-required-after-updates) for the detection and recovery rules.
 
 **Kernel update notification:** A newer kernel image also triggers the single `Wymagany restart hosta` warning once a valid check confirms zero pending updates. See [New kernel restart recommendation](#new-kernel-restart-recommendation).
 
-Zabbix also receives the time of the last check, the schedule status, and the service status. The public [Zabbix template](template/updates-monitor.json) is included in the installation package at `/usr/share/updates-monitor/zabbix-updates-monitor.json`. The installer configures an existing Zabbix agent or agent 2 to read the results. Install and configure the agent separately.
+Zabbix also receives the time of the last check, the schedule status, and the service status. The [Zabbix template](template/updates-monitor.json) is included in the installation package at `/usr/share/updates-monitor/zabbix-updates-monitor.json`. The installer configures an existing Zabbix agent or agent 2 to read the results. Install and configure the agent separately.
 
 ## Restart required after updates
 
@@ -39,7 +39,7 @@ This is a recommendation based on files in `/boot`, not proof that the bootloade
 - On Debian and Ubuntu, a change to the dpkg package database schedules another check after the package manager releases its locks. Installing updates can therefore change the counts without a reboot, usually within a minute.
 - After a reboot, the counts start at zero and the result remains marked invalid until the first successful check. After an error, the previous counts are retained but marked invalid.
 
-Each successful check counts the current upgrade candidates in all three categories and adds the full count to the previous result. For example, 3 followed by 5 becomes 8. A category resets to 0 when a successful check finds no candidates in it. Repeated checks of the same pending packages increase the cumulative count again; it is not a count of unique packages or the number currently waiting to be installed.
+Each successful check counts the packages currently waiting to be installed. Five waiting packages plus three new ones means eight; checking those same eight again still reports eight. Installed packages disappear from the count. The total is the sum of the three disjoint categories. Debian includes upgrades and all new dependencies in the APT full-upgrade plan, matching `apt-get -s dist-upgrade` with the same metadata and configuration. Failed checks retain the last counts and mark them invalid.
 
 Checks use package repository metadata. Timely results require repository access and a running cron service.
 
@@ -47,11 +47,13 @@ Checks use package repository metadata. Timely results require repository access
 
 ### Debian and Ubuntu
 
-Download the [DEB package, version 0.5.13-2](install/updates-monitor_0.5.13-2_all.deb). The downloaded file must be a DEB package, not a GitHub HTML page.
+This repository is private. The download commands require GitHub CLI authenticated with an account that can read the repository, using `gh auth login`.
+
+Download the [DEB package, version 0.5.17-2](install/updates-monitor_0.5.17-2_all.deb). The downloaded file must be a DEB package, not a GitHub HTML page.
 
 ```sh
-curl -fL -o updates-monitor.deb https://raw.githubusercontent.com/g1n10l/updates-monitor/main/install/updates-monitor_0.5.13-2_all.deb
-echo 'f82cb1b4276ec5d82f1b5408e999c7d51f11c86a772072f39a3e8f2164dedc7a  updates-monitor.deb' | sha256sum -c -
+gh api -H 'Accept: application/vnd.github.raw' 'repos/g1n10l/updates-monitor/contents/install/updates-monitor_0.5.17-2_all.deb?ref=main' > updates-monitor.deb
+echo '76328c8f716046aca016796a1c0f0e088a3c311c0910d19675df660c97a9c0f6  updates-monitor.deb' | sha256sum -c -
 sudo dpkg -i updates-monitor.deb
 ```
 
@@ -69,12 +71,12 @@ sudo apt purge updates-monitor
 
 ### Red Hat family
 
-The [RPM package, version 0.5.13-1](install/updates-monitor-0.5.13-1.noarch.rpm), is experimental. It has not been verified on a running RHEL system and is unsigned.
+The [RPM package, version 0.5.17-2](install/updates-monitor-0.5.17-2.noarch.rpm), is experimental. It has not been verified on a running RHEL system and is unsigned.
 
 ```sh
-curl -fL -o updates-monitor-0.5.13-1.noarch.rpm https://raw.githubusercontent.com/g1n10l/updates-monitor/main/install/updates-monitor-0.5.13-1.noarch.rpm
-echo '14cf69934586d742f9d3a6990dd28a863685526089597b7742b5111414b1302b  updates-monitor-0.5.13-1.noarch.rpm' | sha256sum -c -
-sudo dnf install updates-monitor-0.5.13-1.noarch.rpm
+gh api -H 'Accept: application/vnd.github.raw' 'repos/g1n10l/updates-monitor/contents/install/updates-monitor-0.5.17-2.noarch.rpm?ref=main' > updates-monitor-0.5.17-2.noarch.rpm
+echo 'c56bfb3625c7ab026506f466bbd0ceccb658870d37075c03b0d934671284e680  updates-monitor-0.5.17-2.noarch.rpm' | sha256sum -c -
+sudo dnf install updates-monitor-0.5.17-2.noarch.rpm
 ```
 
 To remove it, run `sudo dnf remove updates-monitor`. Configuration and schedule files may remain after removing the RPM.
@@ -97,7 +99,7 @@ man updates-monitor                # Show the manual
 
 Setting any nonzero interval enables automatic checks. `interval 0` disables them, but a manual `status` command still runs a check. A disabled schedule is reported in Zabbix. Package changes on Debian and Ubuntu can also trigger a check when automatic checks are enabled.
 
-`status` displays cumulative scan counts, the last successful check, restart status, the interval, and service status. The service performs one check and may show as `inactive` after it finishes. If a check fails, `status` also shows recent errors from `journalctl`.
+`status` displays current pending package counts, the last successful check, restart status, the interval, and service status. The service performs one check and may show as `inactive` after it finishes. If a check fails, `status` also shows recent errors from `journalctl`.
 
 Check the installed version and view service details with:
 
@@ -122,9 +124,9 @@ Import the [template](template/updates-monitor.json) or `/usr/share/updates-moni
 
 ## Counting limits
 
-On Debian and Ubuntu, the script identifies security archives by the `-security` suffix and examines a `full-upgrade` plan. All kernel upgrades and new kernel packages are counted in the kernel category, regardless of source. Custom repositories and some Ubuntu ESM updates may be counted as regular updates. Some other new dependencies and held packages may be omitted.
+On Debian and Ubuntu, the script identifies security archives by the `-security` suffix and examines a `full-upgrade` plan. All kernel upgrades and new kernel packages are counted in the kernel category, regardless of source. Custom repositories and some Ubuntu ESM updates may be counted as regular updates. New dependencies are included; removals and packages kept back by APT are excluded.
 
-For the RPM version, security classification depends on DNF repository `updateinfo` metadata. Each check counts package candidates; the cumulative totals count repeated observations of the same packages and do not represent vulnerabilities.
+For the RPM version, security classification depends on DNF repository `updateinfo` metadata. Each check counts current package candidates, not vulnerabilities.
 
 Created by **G1n10L**.
 
@@ -163,3 +165,23 @@ for test in "source code"/tests/test_*.py; do
     python3 "$test" || exit 1
 done
 ```
+
+## Updating problem counts in Zabbix
+
+Import the updated template, then run `setup-zabbix-correlation.py --url https://YOUR-ZABBIX/api_jsonrpc.php` from the source directory with a Super admin token in `ZABBIX_API_TOKEN`. Use `--ca-file` for a private CA. DEB and RPM packages install a copy in `/usr/share/updates-monitor/`. This creates or updates the scoped rule defined in `zabbix-updates-monitor-correlation.json`; a template import alone cannot install the global correlation rule.
+
+The rule matches both the old and new `updates-monitor.component=package-count` tags and the same `updates-monitor.scope` tag, containing the host and category. It closes only the previous matching problem. Count items discard unchanged values, so periodic reads do not create duplicate events. The Problems widget can keep its normal layout with operational data hidden and the count in the problem name. Existing untagged problems from earlier templates require a one-time close after migration; their history remains available.
+
+The three categories remain disjoint. Repeated checks do not add the same packages again. The aggregate Razem row and updates.monitor.total item have been removed.
+
+## Distribution release upgrades
+
+The CLI includes a separate DISTRIBUTION / DIST-UPGRADE status, and the template has a Warning trigger for an available distribution release upgrade. Debian checks the official HTTPS stable Release metadata and, for older systems, oldstable, offering only the next major version. Point releases do not raise the alert. Ubuntu uses `do-release-upgrade -c`, respecting the host release policy; install `ubuntu-release-upgrader-core` to enable this check. Missing tools, unsupported systems, network and metadata errors report unknown, rather than no upgrade. Unknown does not close an existing upgrade problem. Release checks run with the package scan. No repositories are changed and no release upgrade is started. The experimental RPM build reports this check as unsupported.
+
+The dependent items are `updates.monitor.dist_upgrade.available` (0: no upgrade, 1: available, 2: unknown), `.current`, `.target`, and `.error`. Existing older raw states skip these fields until the host is updated. `apt dist-upgrade` remains the package plan within configured repositories; the release status is separate and is excluded from package totals.
+
+## Monitor and template versions
+
+The first output line shows the installed updates-monitor version, including its package revision. The aggregate Razem row and `updates.monitor.total` item are removed. The template compares `updates.monitor.version_code` with its own version and the minimum required version. A lower script or a lower template raises the same Warning trigger. An old script that does not report its version is treated as version zero. Numeric comparison includes all four components, so 0.5.10 is newer than 0.5.9 and revision 2 is newer than revision 1. This checks the updates-monitor template, not the Zabbix server software version.
+
+For automatic checks against GitHub Releases, configure `{$UPDATES.MONITOR.GITHUB.TOKEN}` as a secret macro using a dedicated fine-grained token with read-only Contents access to the private repository. Enable the HTTP item `updates.monitor.latest.raw`, its two dependent latest items, and both GitHub-specific triggers, then set `{$UPDATES.MONITOR.GITHUB.CHECK}` to 1. TLS certificate verification remains enabled. Checks run hourly and use published stable releases. If neither side is current, the version trigger fires even when their versions match. A separate trigger reports missing release data after one day. GitHub checks are disabled until credentials are configured; script/template comparison and the required minimum version remain active. Never embed a token in a template export.

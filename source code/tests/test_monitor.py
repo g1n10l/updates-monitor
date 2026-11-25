@@ -39,24 +39,31 @@ sys.modules['apt'] = types.SimpleNamespace(Cache=Cache)
 spec = importlib.util.spec_from_file_location('updates_check', ROOT / 'updates-monitor.py')
 monitor = importlib.util.module_from_spec(spec)
 spec.loader.exec_module(monitor)
+monitor.distribution_status = lambda: {"dist_upgrade_available": 2}
 with tempfile.TemporaryDirectory() as temp:
     monitor.STATE = Path(temp) / 'state.json'
     real_run = monitor.subprocess.run
     monitor.subprocess.run = lambda *args, **kwargs: None
-    data = monitor.check()
-    monitor.subprocess.run = real_run
-    assert [data[k] for k in ('regular', 'security', 'kernel_security', 'valid')] == [1, 1, 4, 1], data
-    monitor.STATE.write_text(json.dumps({'regular': 3, 'security': 2, 'kernel_security': 1,
-                                         'valid': 0, 'checked_at': 1}))
-    fresh = {'regular': 5, 'security': 0, 'kernel_security': 4, 'valid': 1, 'checked_at': 2}
-    combined = monitor.accumulate(fresh)
-    assert [combined[k] for k in monitor.COUNT_KEYS] == [8, 0, 5], combined
-    monitor.STATE.write_text(json.dumps(combined))
-    combined = monitor.accumulate({'regular': 5, 'security': 0, 'kernel_security': 4})
-    assert [combined[k] for k in monitor.COUNT_KEYS] == [13, 0, 9], combined
-    monitor.STATE.write_text(json.dumps(combined))
-    cleared = monitor.accumulate({'regular': 0, 'security': 0, 'kernel_security': 0})
-    assert [cleared[k] for k in monitor.COUNT_KEYS] == [0, 0, 0], cleared
+    original_changes = Cache.get_changes
+    try:
+        data = monitor.check()
+        assert [data[k] for k in ('regular', 'security', 'kernel_security', 'valid')] == [1, 2, 4, 1], data
+        monitor.STATE.write_text(json.dumps({'regular': 300, 'security': 200, 'kernel_security': 100, 'valid': 0}))
+        repeated = monitor.check()
+        assert [repeated[k] for k in ('regular', 'security', 'kernel_security')] == [1, 2, 4], repeated
+        # Five waiting packages plus three new ones means eight, and stays eight.
+        for count in (5, 8, 8, 3, 0):
+            Cache.get_changes = lambda self, n=count: [Package('pkg'+str(i), 'trixie', upgrade=True) for i in range(n)]
+            result = monitor.check()
+            assert [result[k] for k in ('regular', 'security', 'kernel_security')] == [count, 0, 0], result
+            monitor.STATE.write_text(json.dumps(result))
+        missing = Package('removed', 'trixie'); missing.candidate = None
+        downgrade = Package('pinned', 'trixie'); downgrade.marked_downgrade = True
+        Cache.get_changes = lambda self: [missing, Package('held', 'trixie'), downgrade]
+        assert monitor.check()['regular'] == 1
+    finally:
+        monitor.subprocess.run = real_run
+        Cache.get_changes = original_changes
 
 spec = importlib.util.spec_from_file_location('updates_scheduler', ROOT / 'updates-monitor-scheduler.py')
 scheduler = importlib.util.module_from_spec(spec)

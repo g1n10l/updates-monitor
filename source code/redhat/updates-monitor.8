@@ -12,16 +12,19 @@ kernela. Wynik udostępnia agentowi Zabbix. Nie instaluje aktualizacji.
 Harmonogram cron działa domyślnie co jeden dzień. Kontrola jest zlecana
 około minuty po starcie systemu.
 .PP
-Każda udana kontrola dodaje liczbę
-wykrytych pakietów do poprzedniej
-wartości w każdej kategorii. Wynik 0
-zeruje kategorię. Ten sam pakiet może
-być liczony przy kolejnych kontrolach.
+Każda udana kontrola zapisuje bieżącą liczbę pakietów do zainstalowania.
+Pięć oczekujących pakietów i trzy nowe daje osiem. Ponowna kontrola
+nadal pokazuje osiem, jeżeli lista pakietów się nie zmieniła.
+Kategorie są rozłączne. Wynik zero zamyka alarm.
+.PP
+Zmiana sumy tworzy nowe zdarzenie i zamyka poprzednie zdarzenie
+tego hosta i kategorii przez regułę korelacji updates-monitor.
+Odczyt niezmienionej sumy nie tworzy kolejnego zdarzenia.
 .SH POLECENIA
 .TP
 .B status
-Uruchamia kontrolę także przy wyłączonym harmonogramie i pokazuje sumy
-kontroli, stan restartu, usługi oraz interwał.
+Uruchamia kontrolę także przy wyłączonym harmonogramie i pokazuje bieżące liczby
+pakietów, stan restartu, usługi oraz interwał.
 .TP
 .BI interval " wartość"
 Wartość 0 wyłącza automatyczne kontrole; ustawienie interwału ponownie je włącza.
@@ -76,3 +79,15 @@ G1n10L
 .UR https://github.com/g1n10l/updates-monitor
 Projekt na GitHubie
 .UE
+.SH AKTUALIZACJA DYSTRYBUCJI
+Osobna pozycja DIST-UPGRADE pokazuje dostępność następnego wydania.
+Debian używa oficjalnych metadanych stable/oldstable; Ubuntu używa
+polecenia do-release-upgrade -c. Błąd kontroli oznacza stan nieznany.
+RPM nie obsługuje tego wykrywania. Wyzwalacz Zabbixa zgłasza dostępne wydanie
+z poziomem Warning. Stan nieznany nie zamyka alarmu. Nie zmienia repozytoriów,
+nie uruchamia migracji i nie zwiększa sumy pakietów do zainstalowania.
+.SH WERSJA PROGRAMU I SZABLONU
+Pierwszy wiersz pokazuje zainstalowaną wersję programu z rewizją pakietu.
+Pozycja Razem została usunięta. Wyzwalacz zgłasza starszy skrypt lub starszy
+szablon oraz wersję poniżej wymaganej. Sprawdzanie najnowszego wydania GitHuba
+jest opcjonalne i wymaga tokena tylko do odczytu prywatnego repozytorium.

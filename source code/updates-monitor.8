@@ -12,13 +12,10 @@ w trzech kategoriach i udostępnia
 wynik agentowi Zabbix. Nie
 instaluje ani nie usuwa pakietów.
 .PP
-Każda udana kontrola dodaje liczbę
-wykrytych pakietów do zapisanej sumy
-w każdej kategorii. Poprzednie 3 i
-nowe 5 daje 8. Kontrola z wynikiem 0
-zeruje daną kategorię. Ten sam
-pakiet może być liczony ponownie
-przy następnej kontroli.
+Każda udana kontrola zapisuje bieżącą liczbę pakietów do zainstalowania.
+Pięć oczekujących pakietów i trzy nowe daje osiem. Ponowna kontrola
+nadal pokazuje osiem, jeżeli lista pakietów się nie zmieniła.
+Kategorie są rozłączne. Wynik zero zamyka alarm.
 .PP
 Cron sprawdza co minutę, czy upłynął
 ustawiony interwał. Domyślny
@@ -33,6 +30,10 @@ Po zmianie bazy pakietów dpkg cron
 zleca dodatkową kontrolę po zwolnieniu
 blokad APT i dpkg, bez restartu.
 Zwykle następuje to w ciągu minuty.
+.PP
+Zmiana sumy tworzy nowe zdarzenie i zamyka poprzednie zdarzenie
+tego hosta i kategorii przez regułę korelacji updates-monitor.
+Odczyt niezmienionej sumy nie tworzy kolejnego zdarzenia.
 .SH POLECENIA
 .TP
 .B status
@@ -117,11 +118,9 @@ są po nazwie kończącej się na
 -security. Niestandardowe źródła
 oraz część Ubuntu ESM mogą wymagać
 dostosowania. Analizowany jest plan
-full-upgrade. Nowe pakiety kernela
-z archiwum bezpieczeństwa są liczone;
-inne nowe zależności, planowane
-usunięcia i część wstrzymanych
-pakietów mogą być pominięte.
+full-upgrade. Liczone są aktualizacje oraz wszystkie nowe zależności,
+w tym pakiety kernela. Planowane usunięcia i pakiety zatrzymane przez
+APT nie są liczone.
 .SH PLIKI
 .TP
 .I /etc/cron.d/updates-monitor
@@ -156,3 +155,15 @@ Projekt został stworzony przez G1n10L.
 .UR https://github.com/g1n10l/updates-monitor
 Projekt na GitHubie
 .UE
+.SH AKTUALIZACJA DYSTRYBUCJI
+Osobna pozycja DIST-UPGRADE pokazuje dostępność następnego wydania.
+Debian używa oficjalnych metadanych stable/oldstable; Ubuntu używa
+polecenia do-release-upgrade -c. Błąd kontroli oznacza stan nieznany.
+RPM nie obsługuje tego wykrywania. Wyzwalacz Zabbixa zgłasza dostępne wydanie
+z poziomem Warning. Stan nieznany nie zamyka alarmu. Nie zmienia repozytoriów,
+nie uruchamia migracji i nie zwiększa sumy pakietów do zainstalowania.
+.SH WERSJA PROGRAMU I SZABLONU
+Pierwszy wiersz pokazuje zainstalowaną wersję programu z rewizją pakietu.
+Pozycja Razem została usunięta. Wyzwalacz zgłasza starszy skrypt lub starszy
+szablon oraz wersję poniżej wymaganej. Sprawdzanie najnowszego wydania GitHuba
+jest opcjonalne i wymaga tokena tylko do odczytu prywatnego repozytorium.

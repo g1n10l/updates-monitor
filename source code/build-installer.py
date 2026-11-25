@@ -10,7 +10,8 @@ import tarfile
 ROOT = Path(__file__).resolve().parent
 FILES = ('install.sh', 'install-message.sh', 'updates-monitor', 'updates-monitor.py', 'updates-monitor.8',
          'updates-monitor.service', 'updates-monitor-scheduler.py', 'updates-monitor-scheduler.service',
-         'updates-monitor.cron', 'zabbix-updates-monitor.json', 'README.txt')
+         'updates-monitor.cron', 'zabbix-updates-monitor.json', 'zabbix-updates-monitor-correlation.json',
+         'setup-zabbix-correlation.py', 'README.txt')
 HEADER = r'''#!/bin/bash
 set -euo pipefail
 usage() {

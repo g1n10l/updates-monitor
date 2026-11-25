@@ -42,8 +42,18 @@ echo 'Przykładowy błąd usługi' ''',
         if action == 'status':
             assert 'Interwał:   6h' in result.stdout and 'Cron:       active' in result.stdout
             assert 'Regularne:' in result.stdout and 'Restart niewymagany' in result.stdout
+            assert 'Razem:' not in result.stdout
+            assert result.stdout.splitlines()[0].startswith('UPDATES MONITOR ' + (ROOT/'VERSION').read_text().strip()), result.stdout
             assert 'journalctl' not in lines
             assert not any(line.startswith('scheduler enable') for line in lines)
+    for available, target, expected in [(1, 'Debian 14 (forky)', 'dostępna aktualizacja dystrybucji'),
+                                         (0, '', 'brak nowszego wydania'), (2, '', 'Stan:      nieznany')]:
+        payload = json.loads(state.read_text())
+        payload.update(dist_upgrade_available=available, dist_upgrade_current='Debian 13', dist_upgrade_target=target)
+        state.write_text(json.dumps(payload))
+        current = subprocess.run(['bash', str(d / 'cli'), 'status'], env=env, text=True, capture_output=True)
+        assert current.returncode == 0 and expected in current.stdout, current.stdout
+        if target: assert target in current.stdout
     for reboot, kernel, expected in [(1, 0, 'wymagany restart systemu'),
                                      (0, 1, 'wymagany restart systemu'),
                                      (0, 2, 'Stan nieznany')]:
@@ -68,4 +78,5 @@ echo 'Przykładowy błąd usługi' ''',
     env['TEST_START'] = '1'
     result = subprocess.run(['bash', str(d / 'cli'), 'status'], env=env, text=True, capture_output=True)
     assert result.returncode == 1 and 'Przykładowy błąd usługi' in result.stdout
+    assert result.stdout.splitlines()[0].startswith('UPDATES MONITOR ' + (ROOT/'VERSION').read_text().strip())
 print('OK: status, interwał i usunięte polecenia start i stop')

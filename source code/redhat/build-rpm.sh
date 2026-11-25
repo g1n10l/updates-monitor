@@ -15,10 +15,10 @@ sed -e 's|/usr/local/lib/updates-monitor/|/usr/libexec/updates-monitor/|g' -e 's
 for f in updates-monitor.service updates-monitor-scheduler.service; do
     sed 's|/usr/local/lib/updates-monitor/|/usr/libexec/updates-monitor/|g' "$root/$f" > "$work/payload/$f"
 done
-cp "$root/updates-monitor.cron" "$root/install-message.sh" "$root/zabbix-updates-monitor.json" "$work/payload/"
+cp "$root/updates-monitor.cron" "$root/install-message.sh" "$root/zabbix-updates-monitor.json" "$root/zabbix-updates-monitor-correlation.json" "$root/setup-zabbix-correlation.py" "$work/payload/"
 cp "$root/debian/agent.conf" "$work/payload/agent.conf"
 cp "$root/redhat/README.txt" "$work/payload/README.txt"
 cp "$root/redhat/updates-monitor.8" "$work/payload/updates-monitor.8"
 tar -C "$work/payload" -czf "$work/SOURCES/updates-monitor-rpm.tar.gz" .
 rpmbuild --define "_topdir $work" --define "_tmppath $work" --define '_prefix /usr' --define '_sysconfdir /etc' --define '_unitdir /usr/lib/systemd/system' --define '_rpmformat 4' --define '_binary_payload w9.gzdio' --define 'dist %{nil}' --target noarch-linux -bb "$root/redhat/updates-monitor.spec"
-cp "$work/RPMS/noarch/updates-monitor-0.5.13-1.noarch.rpm" "$output/"
+cp "$work/RPMS/noarch/updates-monitor-0.5.17-2.noarch.rpm" "$output/"

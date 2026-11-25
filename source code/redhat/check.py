@@ -9,9 +9,9 @@ import sys
 import tempfile
 import time
 
+VERSION = '0.5.17-2'
 STATE = Path('/run/updates-monitor/state.json')
-EMPTY = {'regular': 0, 'security': 0, 'kernel_security': 0, 'valid': 0, 'checked_at': 0}
-COUNT_KEYS = ('regular', 'security', 'kernel_security')
+EMPTY = {'monitor_version': VERSION, 'regular': 0, 'security': 0, 'kernel_security': 0, 'valid': 0, 'checked_at': 0}
 KERNEL = re.compile(r'^kernel(?:-|$)')
 PACKAGE = re.compile(r'^[A-Za-z0-9_+.-]+\.[A-Za-z0-9_]+$')
 
@@ -33,20 +33,6 @@ def candidates(output):
     return result
 
 
-def accumulate(result):
-    """Add this scan to the last result; clear a category when none remain."""
-    try:
-        previous = json.loads(STATE.read_text(encoding='utf-8'))
-    except FileNotFoundError:
-        previous = {}
-    for key in COUNT_KEYS:
-        old = previous.get(key, 0)
-        if type(old) is not int or old < 0:
-            raise ValueError('Nieprawidłowy poprzedni licznik: ' + key)
-        result[key] = old + result[key] if result[key] else 0
-    return result
-
-
 def check():
     query('makecache', '--refresh')
     fmt = '%{name}.%{arch}'
@@ -54,8 +40,11 @@ def check():
     security = candidates(query('repoquery', '--upgrades', '--latest-limit=1', '--security', '--qf', fmt))
     security &= all_updates
     kernel = {p for p in all_updates if KERNEL.match(p.rsplit('.', 1)[0])}
-    return accumulate({'regular': len(all_updates - security - kernel), 'security': len(security - kernel),
-                       'kernel_security': len(kernel), 'valid': 1, 'checked_at': int(time.time())})
+    return {'monitor_version': VERSION, 'regular': len(all_updates - security - kernel), 'security': len(security - kernel),
+                       'kernel_security': len(kernel), 'valid': 1, 'checked_at': int(time.time()),
+                       'dist_upgrade_available': 2, 'dist_upgrade_current': '',
+                       'dist_upgrade_target': '', 'dist_upgrade_error': 'Wykrywanie wydania dystrybucji obsługuje Debian i Ubuntu',
+                       'dist_upgrade_checked_at': int(time.time())}
 
 
 def write_state(value):
@@ -84,6 +73,7 @@ if __name__ == '__main__':
             result = json.loads(STATE.read_text(encoding='utf-8'))
         except (OSError, ValueError):
             result = dict(EMPTY)
+        result['monitor_version'] = VERSION
         result['valid'] = 0
         write_state(result)
         sys.exit(1)
