@@ -47,12 +47,12 @@ Checks use package repository metadata. Timely results require repository access
 
 ### Debian and Ubuntu
 
-This repository is private. The download commands require GitHub CLI authenticated with an account that can read the repository, using `gh auth login`.
+This repository is public. The download commands use `curl` and require no GitHub account or token.
 
 Download the [DEB package, version 0.5.17-2](install/updates-monitor_0.5.17-2_all.deb). The commands below stop on a download or checksum failure.
 
 ```sh
-gh api -H 'Accept: application/vnd.github.raw' 'repos/g1n10l/updates-monitor/contents/install/updates-monitor_0.5.17-2_all.deb?ref=main' > updates-monitor.deb &&
+curl -fL -o updates-monitor.deb https://raw.githubusercontent.com/g1n10l/updates-monitor/main/install/updates-monitor_0.5.17-2_all.deb &&
 echo '76328c8f716046aca016796a1c0f0e088a3c311c0910d19675df660c97a9c0f6  updates-monitor.deb' | sha256sum -c - &&
 sudo dpkg -i updates-monitor.deb
 ```
@@ -76,8 +76,8 @@ sudo apt purge updates-monitor
 The [RPM package, version 0.5.17-2](install/updates-monitor-0.5.17-2.noarch.rpm), is experimental. It has not been verified on a running RHEL system and is unsigned.
 
 ```sh
-gh api -H 'Accept: application/vnd.github.raw' 'repos/g1n10l/updates-monitor/contents/install/updates-monitor-0.5.17-2.noarch.rpm?ref=main' > updates-monitor-0.5.17-2.noarch.rpm
-echo 'c56bfb3625c7ab026506f466bbd0ceccb658870d37075c03b0d934671284e680  updates-monitor-0.5.17-2.noarch.rpm' | sha256sum -c -
+curl -fL -o updates-monitor-0.5.17-2.noarch.rpm https://raw.githubusercontent.com/g1n10l/updates-monitor/main/install/updates-monitor-0.5.17-2.noarch.rpm &&
+echo 'c56bfb3625c7ab026506f466bbd0ceccb658870d37075c03b0d934671284e680  updates-monitor-0.5.17-2.noarch.rpm' | sha256sum -c - &&
 sudo dnf install updates-monitor-0.5.17-2.noarch.rpm
 ```
 
@@ -186,4 +186,4 @@ The dependent items are `updates.monitor.dist_upgrade.available` (0: no upgrade,
 
 The first output line shows the installed updates-monitor version, including its package revision. The aggregate Razem row and `updates.monitor.total` item are removed. The template compares `updates.monitor.version_code` with its own version and the minimum required version. A lower script or a lower template raises the same Warning trigger. An old script that does not report its version is treated as version zero. Numeric comparison includes all four components, so 0.5.10 is newer than 0.5.9 and revision 2 is newer than revision 1. This checks the updates-monitor template, not the Zabbix server software version.
 
-For automatic checks against GitHub Releases, configure `{$UPDATES.MONITOR.GITHUB.TOKEN}` as a secret macro using a dedicated fine-grained token with read-only Contents access to the private repository. Enable the HTTP item `updates.monitor.latest.raw`, its two dependent latest items, and both GitHub-specific triggers, then set `{$UPDATES.MONITOR.GITHUB.CHECK}` to 1. TLS certificate verification remains enabled. Checks run hourly and use published stable releases. If neither side is current, the version trigger fires even when their versions match. A separate trigger reports missing release data after one day. GitHub checks are disabled until credentials are configured; script/template comparison and the required minimum version remain active. Never embed a token in a template export.
+For automatic checks against GitHub Releases, configure `{$UPDATES.MONITOR.GITHUB.TOKEN}` as a secret macro using a dedicated fine-grained token with read-only Contents access to the repository. Enable the HTTP item `updates.monitor.latest.raw`, its two dependent latest items, and both GitHub-specific triggers, then set `{$UPDATES.MONITOR.GITHUB.CHECK}` to 1. TLS certificate verification remains enabled. Checks run hourly and use published stable releases. If neither side is current, the version trigger fires even when their versions match. A separate trigger reports missing release data after one day. GitHub checks are disabled until credentials are configured; script/template comparison and the required minimum version remain active. Never embed a token in a template export.

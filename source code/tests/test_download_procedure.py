@@ -7,7 +7,7 @@ assert len(block.strip().splitlines()) == 3 and block.count('&&') == 2
 with tempfile.TemporaryDirectory() as tmp:
  p=Path(tmp);bin=p/'bin';bin.mkdir()
  scripts={
- 'gh': '#!/bin/sh\nif [ "$1" = auth ]; then exit 0; fi\ncase "$TEST_MODE" in\nfailed) printf "Not Found"; exit 1;;\nhtml) printf "<html>Not Found</html>";;\ntruncated) printf "!<ar";;\nvalid) cat "$TEST_DEB";;\nesac\n',
+ 'curl': '#!/bin/sh\n[ "$1" = -fL ] && [ "$2" = -o ] || exit 2\ncase "$TEST_MODE" in\nfailed) printf "Not Found" > "$3"; exit 22;;\nhtml) printf "<html>Not Found</html>" > "$3";;\ntruncated) printf "!<ar" > "$3";;\nvalid) cat "$TEST_DEB" > "$3";;\nesac\n',
  'dpkg-deb': '#!/bin/sh\nexit 0\n',
  'sudo': '#!/bin/sh\nprintf "%s\\n" "$*" >> "$TEST_INSTALL_LOG"\n'
  }
