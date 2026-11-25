@@ -19,10 +19,24 @@ The installers do not install a Zabbix agent or add a Zabbix repository. They co
 On Debian, Ubuntu and compatible systems, install the downloaded DEB package:
 
 ```sh
-gh api -H 'Accept: application/vnd.github.raw' 'repos/g1n10l/updates-monitor/contents/install/updates-monitor_0.5.17-2_all.deb?ref=main' > updates-monitor.deb
-echo '76328c8f716046aca016796a1c0f0e088a3c311c0910d19675df660c97a9c0f6  updates-monitor.deb' | sha256sum -c -
-sudo dpkg -i updates-monitor.deb
+(
+    set -eu
+    gh auth status
+    work=$(mktemp -d ./updates-monitor-download.XXXXXXXX)
+    trap 'rm -rf -- "$work"' EXIT
+    gh api -H 'Accept: application/vnd.github.raw' \
+        'repos/g1n10l/updates-monitor/contents/install/updates-monitor_0.5.17-2_all.deb?ref=0c22d15' \
+        > "$work/updates-monitor.deb"
+    printf '%s  %s\n' \
+        '76328c8f716046aca016796a1c0f0e088a3c311c0910d19675df660c97a9c0f6' \
+        "$work/updates-monitor.deb" | sha256sum -c -
+    dpkg-deb --info "$work/updates-monitor.deb" >/dev/null
+    mv -- "$work/updates-monitor.deb" ./updates-monitor.deb
+    sudo apt-get install -y "$(pwd)/updates-monitor.deb"
+)
 ```
+
+The archive installer also checks the adjacent `.deb.sha256` file and the DEB format before invoking APT. Keep the package and its checksum file together.
 
 Debian revision `0.5.13-2` fixes installation and result writes after SELinux tools have been removed while the kernel remains in permissive mode. Systems without SELinux need no SELinux tools. With SELinux enabled and its tools present, runtime labeling remains supported. Enforcing mode requires `semanage` and `restorecon`; the installer reports missing tools rather than disabling enforcement. The package was installed and checked on Debian 13 hosts with SELinux enforcing, permissive and disabled. Automated regression tests cover these variants. Ubuntu installation has not been tested.
 

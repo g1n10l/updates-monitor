@@ -88,7 +88,8 @@ def build():
         target.chmod(0o755)
     bundle = out.parent / 'updates-monitor-deb-installer.tar.gz'
     bundle.write_bytes(tar_bytes({PACKAGE: (package, 0o644),
-                                  'install-deb.sh': (read('install-deb.sh'), 0o755)}))
+                                  'install-deb.sh': (read('install-deb.sh'), 0o755),
+                                  PACKAGE + '.sha256': ((f'{sha}  {PACKAGE}\n').encode('ascii'), 0o644)}))
     versioned_bundle = out.parent / 'updates-monitor-0.5.17-2-deb-installer.tar.gz'
     versioned_bundle.write_bytes(bundle.read_bytes())
     bundle_hash = hashlib.sha256(bundle.read_bytes()).hexdigest()
